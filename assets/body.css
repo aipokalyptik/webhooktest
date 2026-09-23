@@ -1,0 +1,218 @@
+.body-source-label {
+  margin: 0 0 14px;
+  color: #59677b;
+  font-size: 11px;
+}
+.body-source-select {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  font-size: 12px;
+}
+.body-detection {
+  border: 1px solid #e1e7ed;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  background: #f8fafc;
+  padding: 10px 12px;
+}
+.body-detection summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 11px;
+}
+.body-detection summary::-webkit-details-marker {
+  display: none;
+}
+.body-detection summary::before {
+  content: "▸";
+  color: #74849a;
+}
+.body-detection[open] summary::before {
+  content: "▾";
+}
+.body-detection strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.body-kind {
+  text-transform: uppercase;
+  font-size: 8px;
+  letter-spacing: 0.6px;
+  border-radius: 4px;
+  background: #e4f2ed;
+  color: #2e7160;
+  padding: 3px 5px;
+}
+.body-kind.is-binary {
+  background: #ece8f6;
+  color: #735396;
+}
+.body-detection-why {
+  margin-left: auto;
+  color: #61738b;
+  font-size: 10px;
+}
+.body-detection dl {
+  margin: 12px 0 0;
+}
+.body-detection dl > div {
+  display: grid;
+  grid-template-columns: minmax(85px, 1fr) minmax(0, 3fr);
+  gap: 12px;
+  border-top: 1px solid #e8edf3;
+  padding: 8px 0;
+  font-size: 11px;
+}
+.body-detection dt {
+  color: #687c91;
+}
+.body-detection dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #354764;
+}
+.body-detection p,
+.body-encoding-note {
+  font-size: 11px;
+  color: #59677b;
+  margin: 10px 0 0;
+}
+.body-syntax-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+.body-syntax-controls label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #59677b;
+  margin: 0;
+}
+.body-language {
+  font-size: 11px;
+  padding: 6px 9px;
+  max-width: min(240px, 65vw);
+}
+.body-wrap {
+  width: auto;
+  accent-color: #d9512b;
+}
+.body-code {
+  color: #394b65;
+  font-size: 12px;
+  line-height: 1.8;
+  max-height: 540px;
+}
+.body-code:focus-visible {
+  outline: 2px solid #e6a184;
+  outline-offset: 2px;
+}
+.body-code code {
+  font: inherit;
+  tab-size: inherit;
+  background: none;
+}
+.body-code.wrap-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.body-render-status,
+.body-copy-status {
+  color: #657389;
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+.body-render-status:empty {
+  display: none;
+}
+.body-warning,
+.body-detection .body-warning {
+  color: #956318;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.body-guide {
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.body-guide summary {
+  cursor: pointer;
+  color: #59677b;
+  font-size: 11px;
+}
+.body-guide p {
+  color: #59677b;
+  font-size: 12px;
+  line-height: 1.8;
+}
+/* Local Prism theme: source text remains legible without a themed background.
+   These selectors only color our code previews, never application controls. */
+.body-code .token.comment,
+.body-code .token.prolog,
+.body-code .token.doctype,
+.body-code .token.cdata {
+  color: #748096;
+  font-style: italic;
+}
+.body-code .token.punctuation {
+  color: #69798a;
+}
+.body-code .token.property,
+.body-code .token.tag,
+.body-code .token.symbol,
+.body-code .token.deleted {
+  color: #a34359;
+}
+.body-code .token.boolean,
+.body-code .token.number,
+.body-code .token.constant {
+  color: #976010;
+}
+.body-code .token.selector,
+.body-code .token.attr-name,
+.body-code .token.string,
+.body-code .token.char,
+.body-code .token.builtin,
+.body-code .token.inserted {
+  color: #237b64;
+}
+.body-code .token.operator,
+.body-code .token.entity,
+.body-code .token.url {
+  color: #705397;
+}
+.body-code .token.atrule,
+.body-code .token.attr-value,
+.body-code .token.keyword {
+  color: #3462a7;
+}
+.body-code .token.function,
+.body-code .token.class-name {
+  color: #8651a0;
+}
+.body-code .token.regex,
+.body-code .token.important,
+.body-code .token.variable {
+  color: #a45c24;
+}
+.body-code .token.important,
+.body-code .token.bold {
+  font-weight: 600;
+}
+.body-code .token.italic {
+  font-style: italic;
+}

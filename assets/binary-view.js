@@ -7,7 +7,7 @@ class BinaryViewer {
     this.host = host;
     this.record = record;
     this.copy = onCopy;
-    this.data = BinaryData.decode(record.body_base64);
+    this.data = record.body_bytes ?? BinaryData.decode(record.body_base64);
     this.state =
       previousState?.id === record.id
         ? previousState

@@ -1,7 +1,7 @@
 "use strict";
 const shellQuote = (s) => "'" + s.replace(/'/g, "'\\''") + "'";
 // Format valid JSON without parsing and serializing its numbers: 64-bit IDs remain exact.
-function prettyJSON(text) {
+function prettyJSON(text, maxOutput = Infinity) {
   try {
     JSON.parse(text);
   } catch {
@@ -11,31 +11,52 @@ function prettyJSON(text) {
     depth = 0,
     quoted = false,
     escaped = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (quoted) {
-      result += c;
-      if (escaped) escaped = false;
-      else if (c === "\\") escaped = true;
-      else if (c === '"') quoted = false;
-      continue;
+  // A small deeply nested document can expand quadratically. Fall back to the
+  // original JSON before allocating excessive indentation; its bytes and exact
+  // numeric spelling are more valuable than cosmetic formatting.
+  const add = (value) => {
+    if (result.length + value.length > maxOutput)
+      throw new RangeError("JSON formatting budget exceeded");
+    result += value;
+  };
+  const newline = () => {
+    if (result.length + 1 + depth * 2 > maxOutput)
+      throw new RangeError("JSON formatting budget exceeded");
+    add("\n" + "  ".repeat(depth));
+  };
+  try {
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (quoted) {
+        add(c);
+        if (escaped) escaped = false;
+        else if (c === "\\") escaped = true;
+        else if (c === '"') quoted = false;
+        continue;
+      }
+      if (c === '"') {
+        quoted = true;
+        add(c);
+      } else if (/\s/.test(c)) continue;
+      else if (c === "{" || c === "[") {
+        add(c);
+        depth++;
+        let next = i + 1;
+        while (/\s/.test(text[next] || "") && next < text.length) next++;
+        if (text[next] !== "}" && text[next] !== "]") newline();
+      } else if (c === "}" || c === "]") {
+        depth--;
+        if (!/[{\[]$/.test(result)) newline();
+        add(c);
+      } else if (c === ",") {
+        add(",");
+        newline();
+      } else if (c === ":") add(": ");
+      else add(c);
     }
-    if (c === '"') {
-      quoted = true;
-      result += c;
-    } else if (/\s/.test(c)) continue;
-    else if (c === "{" || c === "[") {
-      result += c;
-      depth++;
-      if (!/^[\s]*[}\]]/.test(text.slice(i + 1)))
-        result += "\n" + "  ".repeat(depth);
-    } else if (c === "}" || c === "]") {
-      depth--;
-      if (!/[{\[]$/.test(result)) result += "\n" + "  ".repeat(depth);
-      result += c;
-    } else if (c === ",") result += ",\n" + "  ".repeat(depth);
-    else if (c === ":") result += ": ";
-    else result += c;
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    return text;
   }
   return result;
 }

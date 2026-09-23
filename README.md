@@ -31,12 +31,12 @@ PHP's built-in server is for local development. A public webhook provider needs 
 - Named inboxes with copyable endpoints; inboxes need no provisioning.
 - GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, TRACE, WebDAV methods, and any other method your HTTP server passes to PHP. The receiver has no method allowlist.
 - Exact body bytes for JSON, XML, text, URL-encoded forms, multipart uploads, and binary data.
-- A responsive inspector with formatted/raw body views, an interactive hex viewer, headers, repeated query parameters, and request metadata. JSON formatting preserves large numeric IDs and the original number spelling.
+- A responsive inspector with file-type detection, 290 syntax languages, formatted/raw text, an interactive hex viewer, multipart file inspection, headers, repeated query parameters, and request metadata. JSON formatting preserves large numeric IDs and the original number spelling.
 - Raw body downloads, complete JSON exports, copyable replay cURL commands, and downloadable replay shell scripts.
 - Live polling (with pause), literal / wildcard / regex search, field filters, JSONPath, 50-item pages, request permalinks, and dynamic search permalinks.
 - Database tools: delete an individual capture, preview and delete older captures, flush one inbox or all inboxes, and download a consistent JSON backup.
 - No automatic expiry. Deleting files immediately releases their space; no vacuum or compaction is needed.
-- No external fonts, CDNs, analytics, or network dependencies. JSONPath is bundled locally with its license.
+- No external fonts, CDNs, analytics, or network dependencies. JSONPath and PrismJS are bundled locally with their licenses.
 
 ## URLs
 
@@ -52,9 +52,29 @@ Receiver and viewer are separate, so viewing a request never creates another cap
 
 Inbox names contain 1–64 lowercase ASCII letters, digits, hyphens, or underscores, starting with a letter or digit. Omit `inbox` for `default`. The receiver reserves only that query parameter; everything else is captured as supplied. Its raw query string preserves duplicate parameters and original escaping.
 
+## Body inspection and syntax highlighting
+
+The Body tab starts in **Auto**. It opens detected binary formats in Hex, including files such as PDFs whose bytes can look like ordinary ASCII. Text opens with syntax colors when a language can be identified; an uncertain language stays plain text. Choose **Formatted**, **Raw**, **Hex**, or **Base64** to override the view. In text modes, the **Syntax** selector offers Auto, Plain text, and **290 bundled languages**; type a language name while the selector is focused. **Wrap lines** makes long lines easier to read.
+
+Open **Detection details** to see the evidence: known byte signatures, PHP Fileinfo/libmagic when available, byte/text validation, recognizable text structure, Content-Type, charset, and posted filenames. Specific content clues take precedence over filename guesses. Filenames from Content-Disposition, including multipart uploads and encoded `filename*` values, help select syntax for source files; a request URL is not treated as the uploaded filename. SVG remains inspectable XML text. A byte-order mark can identify UTF-16 or UTF-32 text even when the declared charset disagrees. Detection is best effort, not file validation, and the details expose warnings and conflicting claims.
+
+**Formatted** indents valid JSON while preserving large numeric IDs and the original spelling of numbers. Other text retains its layout. **Raw** means unformatted, decoded text; both text modes can use syntax colors. Auto and Formatted omit a leading byte-order mark from the preview; Raw preserves it. Copy takes the full decoded text, including its BOM, rather than the formatted preview. Base64 copying preserves arbitrary original bytes. **Download** in the Body toolbar always saves the original bytes and encoding. Manually interpreting binary as text may produce replacement characters; use Hex or Download for exact data.
+
+Text previews are limited to **100,000 characters**. Highlighting runs in a worker with a **2.5-second deadline** once its local assets have loaded, with up to 10 seconds allowed for initial loading. A **2,097,152-character limit on generated token markup** also applies. Exceeding either budget falls back to plain text. JSON indentation has the same 100,000-character budget and retains the unformatted source if expansion would exceed it. These preview limits do not shorten Copy, Download, or the navigable Hex body.
+
+Compressed requests remain their original encoded bytes and open in Hex. Detection includes **Content-Encoding** and recognizes matching gzip and Zstandard signatures; Content-Type describes the body after decoding, so a gzipped JSON request is not treated as a MIME mismatch. Inspection does not decompress bodies.
+
+PrismJS **1.30.0** is served locally, with all **297 official components** included. Seven helper/modifier components support other grammars rather than appearing as separate language choices. See [vendor provenance and update instructions](.conf/vendor/prism.md). There is no CDN, runtime package install, or deployment build step. PHP **Fileinfo** and **iconv** are optional: deterministic signatures and byte validation still work without Fileinfo; unsupported charset conversion keeps a conservative binary view with the original bytes available.
+
+### Multipart files and fields
+
+For a multipart request, the **Inspect** selector lets you switch between the original envelope and its individual fields/files. Each part gets its own type detection, syntax choice, Hex view, and download using its posted filename when present. Parts are exact slices of the captured body, not reconstructed uploads. Detection details show each part's original capture offset; Hex offsets start at zero within the selected part. Choose **Original request body** to download the complete envelope, including its boundaries and part headers.
+
+The preview examines at most **100 parts**, with up to **16 KiB and 100 lines of headers per part**. Malformed or incomplete parts produce warnings; the whole body remains available. Nested multipart data stays available as one original byte slice and is not recursively expanded. Content-Transfer-Encoding is preserved as captured rather than decoded. The capture itself, JSON export, and backups remain unchanged: computed `inspection` information is added only to the individual request-detail API response.
+
 ## Binary body viewer
 
-Choose **Hex** in the Body tab to inspect the original bytes of any capture, including text and JSON. Binary bodies open in Hex by default; **Base64** remains available. The viewer is read-only: selection, search, and interpretation never change the captured body.
+Choose **Hex** in the Body tab to inspect the original bytes of any capture or selected multipart part, including text and JSON. Auto opens detected binary bodies in Hex; **Base64** remains available. The viewer is read-only: selection, search, and interpretation never change the captured body.
 
 Offsets, hexadecimal bytes, and printable ASCII stay aligned. Selecting a byte highlights both representations, and a color legend distinguishes printable text, whitespace, zeroes, control bytes, and non-ASCII bytes. Other bytes appear as dots in the ASCII column. **Auto** chooses a row width that fits the panel; choose 4, 8, 16, or 32 bytes per row explicitly, or use **Expand** for more room.
 
@@ -73,7 +93,7 @@ Clipboard copying is limited to selections of **1 MiB of source bytes**; use **S
 
 The **Interpret bytes at cursor** panel shows bits, signed/unsigned integers, and floating-point values beginning at the selected byte. Switch between little and big endian; `—` means there are not enough remaining bytes for that type. The 64-bit integer values retain their exact precision. Ctrl/⌘+F and Ctrl/⌘+G focus the find and offset controls while the grid has focus; the expandable help inside the viewer explains the controls.
 
-Only visible rows are rendered, so the full body remains navigable without creating a page element for every byte. No new runtime dependencies, external services, or build step are required. Implementation choices and maintenance notes are in [`.conf/BINARY-VIEWER.md`](.conf/BINARY-VIEWER.md).
+Only visible rows are rendered, so the full body remains navigable without creating a page element for every byte. The hex viewer itself has no library dependency. Implementation choices and maintenance notes are in [`.conf/BINARY-VIEWER.md`](.conf/BINARY-VIEWER.md).
 
 ## Search
 
@@ -241,7 +261,7 @@ API errors have an HTTP error status and a JSON `error` field. No sign-in or tok
 | Method | Endpoint | Result |
 | --- | --- | --- |
 | GET | `api.php?inbox=default&q=hello&page=1` | Summary list, counts, pagination, inboxes |
-| GET | `api.php?action=request&id=ID` | Full capture and links |
+| GET | `api.php?action=request&id=ID` | Full capture, links, and computed type/multipart inspection |
 | GET | `api.php?action=download&id=ID` | Original body bytes as attachment |
 | GET | `api.php?action=export&id=ID` | Complete capture as JSON attachment |
 | DELETE | `api.php?action=delete&id=ID` | Delete one capture |
@@ -272,10 +292,12 @@ Development checks use Python 3 and Node.js; neither is required to host the ser
 
 ```sh
 python3 tests/test_service.py
+php tests/test_inspection.php
 node tests/test_frontend.cjs
 node tests/test_binary.cjs
+node tests/test_syntax.cjs
 ```
 
-The integration suite starts an isolated PHP server with temporary JSON storage, uses bounded HTTP/process timeouts, and cleans up after itself. It checks HTTP methods, binary/multipart fidelity, headers, body limits, search/pagination, persistence, downloads, backup/restore, age-based deletion, flushing, concurrency, and no-cache/no-index responses. Frontend helper tests cover shell quoting, number precision, binary replay, and large-body replay. Binary viewer tests cover exact bytes, copy formats, offset validation, numeric interpretation, worker search and wrapping, 10 MiB range downloads, and clipboard fallbacks inside dialogs. GitHub Actions runs against PHP 8.4–8.5.
+The integration suite starts an isolated PHP server with temporary JSON storage, uses bounded HTTP/process timeouts, and cleans up after itself. It checks HTTP methods, binary/multipart fidelity, headers, body limits, search/pagination, persistence, downloads, backup/restore, age-based deletion, flushing, concurrency, and no-cache/no-index responses. Frontend helper tests cover shell quoting, number precision, binary replay, and large-body replay. Binary viewer tests cover exact bytes, copy formats, offset validation, numeric interpretation, worker search and wrapping, 10 MiB range downloads, and clipboard fallbacks inside dialogs. Inspection and syntax tests cover type evidence, encodings, multipart byte ranges and limits, grammar selection, token escaping, and bounded previews/formatting. GitHub Actions runs against PHP 8.4–8.5.
 
 MIT licensed.

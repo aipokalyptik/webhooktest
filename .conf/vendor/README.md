@@ -1,5 +1,10 @@
 # Bundled libraries
 
+PrismJS 1.30.0 (MIT) provides local syntax highlighting in `assets/vendor/prism/`.
+Its complete grammar set, generated language metadata, source integrity, and
+reproduction instructions are documented in [prism.md](prism.md). This library
+also requires no deployment package installation or build step.
+
 SoftCreatR/JSONPath 2.0.0 (MIT)
 - Upstream: https://github.com/SoftCreatR/JSONPath
 - Commit: 941fe4742e42380d394064fda61e2d9cc5615db1

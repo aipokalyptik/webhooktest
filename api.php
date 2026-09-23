@@ -99,6 +99,17 @@ if (in_array($action, ['request', 'download', 'export', 'delete'], true)) {
         echo $body;
         exit;
     }
+    if ($action === 'request') {
+        // Inspection is computed on demand, outside the storage lock. It never
+        // changes captures/exports and must not hide a body if a detector fails.
+        try {
+            require_once __DIR__ . '/.conf/inspect.php';
+            $request['inspection'] = inspect_capture($request);
+        } catch (Throwable $error) {
+            error_log('Webhook Test inspection: ' . $error->getMessage());
+            $request['inspection'] = ['warnings' => ['File inspection is unavailable; original bytes are preserved.']];
+        }
+    }
     $request['headers'] = (object) $request['headers'];
     if ($action === 'export') {
         header('Content-Disposition: attachment; filename="webhook-' . $id . '.json"');

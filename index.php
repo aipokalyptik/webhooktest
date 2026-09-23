@@ -7,7 +7,13 @@ if (isset($_GET['asset'])) {
     $assets = [
         'app.css' => 'text/css; charset=utf-8',
         'binary.css' => 'text/css; charset=utf-8',
+        'body.css' => 'text/css; charset=utf-8',
         'app.js' => 'text/javascript; charset=utf-8',
+        'body-core.js' => 'text/javascript; charset=utf-8',
+        'body-view.js' => 'text/javascript; charset=utf-8',
+        'syntax-worker.js' => 'text/javascript; charset=utf-8',
+        'prism.js' => 'text/javascript; charset=utf-8',
+        'prism-languages.js' => 'text/javascript; charset=utf-8',
         'core.js' => 'text/javascript; charset=utf-8',
         'search.js' => 'text/javascript; charset=utf-8',
         'binary-core.js' => 'text/javascript; charset=utf-8',
@@ -19,7 +25,8 @@ if (isset($_GET['asset'])) {
         respond(['error' => 'Asset not found.'], 404);
     }
     header('Content-Type: ' . $assets[$asset]);
-    readfile(__DIR__ . '/assets/' . $asset);
+    $vendorPaths = ['prism.js' => 'vendor/prism/prism.js', 'prism-languages.js' => 'vendor/prism/languages.js'];
+    readfile(__DIR__ . '/assets/' . ($vendorPaths[$asset] ?? $asset));
     exit;
 }
 header('Content-Type: text/html; charset=utf-8');
@@ -35,10 +42,14 @@ header('Content-Type: text/html; charset=utf-8');
     <link rel="icon" href="index.php?asset=mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="index.php?asset=app.css" />
     <link rel="stylesheet" href="index.php?asset=binary.css" />
+    <link rel="stylesheet" href="index.php?asset=body.css" />
     <script src="index.php?asset=core.js" defer></script>
     <script src="index.php?asset=search.js" defer></script>
     <script src="index.php?asset=binary-core.js" defer></script>
     <script src="index.php?asset=binary-view.js" defer></script>
+    <script src="index.php?asset=prism-languages.js" defer></script>
+    <script src="index.php?asset=body-core.js" defer></script>
+    <script src="index.php?asset=body-view.js" defer></script>
     <script src="index.php?asset=app.js" defer></script>
   </head>
   <body

@@ -1,0 +1,1636 @@
+[
+  {
+    "id": "ignore",
+    "name": ".ignore",
+    "aliases": [
+      "gitignore",
+      "hgignore",
+      "npmignore"
+    ]
+  },
+  {
+    "id": "properties",
+    "name": ".properties",
+    "aliases": []
+  },
+  {
+    "id": "asm6502",
+    "name": "6502 Assembly",
+    "aliases": []
+  },
+  {
+    "id": "abap",
+    "name": "ABAP",
+    "aliases": []
+  },
+  {
+    "id": "abnf",
+    "name": "ABNF",
+    "aliases": []
+  },
+  {
+    "id": "actionscript",
+    "name": "ActionScript",
+    "aliases": []
+  },
+  {
+    "id": "ada",
+    "name": "Ada",
+    "aliases": []
+  },
+  {
+    "id": "agda",
+    "name": "Agda",
+    "aliases": []
+  },
+  {
+    "id": "al",
+    "name": "AL",
+    "aliases": []
+  },
+  {
+    "id": "antlr4",
+    "name": "ANTLR4",
+    "aliases": [
+      "g4"
+    ]
+  },
+  {
+    "id": "apacheconf",
+    "name": "Apache Configuration",
+    "aliases": []
+  },
+  {
+    "id": "apex",
+    "name": "Apex",
+    "aliases": []
+  },
+  {
+    "id": "apl",
+    "name": "APL",
+    "aliases": []
+  },
+  {
+    "id": "applescript",
+    "name": "AppleScript",
+    "aliases": []
+  },
+  {
+    "id": "aql",
+    "name": "AQL",
+    "aliases": []
+  },
+  {
+    "id": "arduino",
+    "name": "Arduino",
+    "aliases": [
+      "ino"
+    ]
+  },
+  {
+    "id": "arff",
+    "name": "ARFF",
+    "aliases": []
+  },
+  {
+    "id": "armasm",
+    "name": "ARM Assembly",
+    "aliases": [
+      "arm-asm"
+    ]
+  },
+  {
+    "id": "arturo",
+    "name": "Arturo",
+    "aliases": [
+      "art"
+    ]
+  },
+  {
+    "id": "asciidoc",
+    "name": "AsciiDoc",
+    "aliases": [
+      "adoc"
+    ]
+  },
+  {
+    "id": "aspnet",
+    "name": "ASP.NET (C#)",
+    "aliases": []
+  },
+  {
+    "id": "asmatmel",
+    "name": "Atmel AVR Assembly",
+    "aliases": []
+  },
+  {
+    "id": "autohotkey",
+    "name": "AutoHotkey",
+    "aliases": []
+  },
+  {
+    "id": "autoit",
+    "name": "AutoIt",
+    "aliases": []
+  },
+  {
+    "id": "avisynth",
+    "name": "AviSynth",
+    "aliases": [
+      "avs"
+    ]
+  },
+  {
+    "id": "avro-idl",
+    "name": "Avro IDL",
+    "aliases": [
+      "avdl"
+    ]
+  },
+  {
+    "id": "awk",
+    "name": "AWK",
+    "aliases": [
+      "gawk"
+    ]
+  },
+  {
+    "id": "bash",
+    "name": "Bash",
+    "aliases": [
+      "sh",
+      "shell"
+    ]
+  },
+  {
+    "id": "basic",
+    "name": "BASIC",
+    "aliases": []
+  },
+  {
+    "id": "batch",
+    "name": "Batch",
+    "aliases": []
+  },
+  {
+    "id": "bbcode",
+    "name": "BBcode",
+    "aliases": [
+      "shortcode"
+    ]
+  },
+  {
+    "id": "bbj",
+    "name": "BBj",
+    "aliases": []
+  },
+  {
+    "id": "bicep",
+    "name": "Bicep",
+    "aliases": []
+  },
+  {
+    "id": "birb",
+    "name": "Birb",
+    "aliases": []
+  },
+  {
+    "id": "bison",
+    "name": "Bison",
+    "aliases": []
+  },
+  {
+    "id": "bnf",
+    "name": "BNF",
+    "aliases": [
+      "rbnf"
+    ]
+  },
+  {
+    "id": "bqn",
+    "name": "BQN",
+    "aliases": []
+  },
+  {
+    "id": "brainfuck",
+    "name": "Brainfuck",
+    "aliases": []
+  },
+  {
+    "id": "brightscript",
+    "name": "BrightScript",
+    "aliases": []
+  },
+  {
+    "id": "bro",
+    "name": "Bro",
+    "aliases": []
+  },
+  {
+    "id": "bsl",
+    "name": "BSL (1C:Enterprise)",
+    "aliases": [
+      "oscript"
+    ]
+  },
+  {
+    "id": "c",
+    "name": "C",
+    "aliases": []
+  },
+  {
+    "id": "csharp",
+    "name": "C#",
+    "aliases": [
+      "cs",
+      "dotnet"
+    ]
+  },
+  {
+    "id": "cpp",
+    "name": "C++",
+    "aliases": []
+  },
+  {
+    "id": "clike",
+    "name": "C-like",
+    "aliases": []
+  },
+  {
+    "id": "cfscript",
+    "name": "CFScript",
+    "aliases": [
+      "cfc"
+    ]
+  },
+  {
+    "id": "chaiscript",
+    "name": "ChaiScript",
+    "aliases": []
+  },
+  {
+    "id": "cil",
+    "name": "CIL",
+    "aliases": []
+  },
+  {
+    "id": "cilkc",
+    "name": "Cilk/C",
+    "aliases": [
+      "cilk-c"
+    ]
+  },
+  {
+    "id": "cilkcpp",
+    "name": "Cilk/C++",
+    "aliases": [
+      "cilk-cpp",
+      "cilk"
+    ]
+  },
+  {
+    "id": "clojure",
+    "name": "Clojure",
+    "aliases": []
+  },
+  {
+    "id": "cmake",
+    "name": "CMake",
+    "aliases": []
+  },
+  {
+    "id": "cobol",
+    "name": "COBOL",
+    "aliases": []
+  },
+  {
+    "id": "coffeescript",
+    "name": "CoffeeScript",
+    "aliases": [
+      "coffee"
+    ]
+  },
+  {
+    "id": "concurnas",
+    "name": "Concurnas",
+    "aliases": [
+      "conc"
+    ]
+  },
+  {
+    "id": "csp",
+    "name": "Content-Security-Policy",
+    "aliases": []
+  },
+  {
+    "id": "cooklang",
+    "name": "Cooklang",
+    "aliases": []
+  },
+  {
+    "id": "coq",
+    "name": "Coq",
+    "aliases": []
+  },
+  {
+    "id": "crystal",
+    "name": "Crystal",
+    "aliases": []
+  },
+  {
+    "id": "css",
+    "name": "CSS",
+    "aliases": []
+  },
+  {
+    "id": "csv",
+    "name": "CSV",
+    "aliases": []
+  },
+  {
+    "id": "cue",
+    "name": "CUE",
+    "aliases": []
+  },
+  {
+    "id": "cypher",
+    "name": "Cypher",
+    "aliases": []
+  },
+  {
+    "id": "d",
+    "name": "D",
+    "aliases": []
+  },
+  {
+    "id": "dart",
+    "name": "Dart",
+    "aliases": []
+  },
+  {
+    "id": "dataweave",
+    "name": "DataWeave",
+    "aliases": []
+  },
+  {
+    "id": "dax",
+    "name": "DAX",
+    "aliases": []
+  },
+  {
+    "id": "dhall",
+    "name": "Dhall",
+    "aliases": []
+  },
+  {
+    "id": "diff",
+    "name": "Diff",
+    "aliases": []
+  },
+  {
+    "id": "django",
+    "name": "Django/Jinja2",
+    "aliases": [
+      "jinja2"
+    ]
+  },
+  {
+    "id": "dns-zone-file",
+    "name": "DNS zone file",
+    "aliases": [
+      "dns-zone"
+    ]
+  },
+  {
+    "id": "docker",
+    "name": "Docker",
+    "aliases": [
+      "dockerfile"
+    ]
+  },
+  {
+    "id": "dot",
+    "name": "DOT (Graphviz)",
+    "aliases": [
+      "gv"
+    ]
+  },
+  {
+    "id": "ebnf",
+    "name": "EBNF",
+    "aliases": []
+  },
+  {
+    "id": "editorconfig",
+    "name": "EditorConfig",
+    "aliases": []
+  },
+  {
+    "id": "eiffel",
+    "name": "Eiffel",
+    "aliases": []
+  },
+  {
+    "id": "ejs",
+    "name": "EJS",
+    "aliases": [
+      "eta"
+    ]
+  },
+  {
+    "id": "elixir",
+    "name": "Elixir",
+    "aliases": []
+  },
+  {
+    "id": "elm",
+    "name": "Elm",
+    "aliases": []
+  },
+  {
+    "id": "etlua",
+    "name": "Embedded Lua templating",
+    "aliases": []
+  },
+  {
+    "id": "erb",
+    "name": "ERB",
+    "aliases": []
+  },
+  {
+    "id": "erlang",
+    "name": "Erlang",
+    "aliases": []
+  },
+  {
+    "id": "excel-formula",
+    "name": "Excel Formula",
+    "aliases": [
+      "xlsx",
+      "xls"
+    ]
+  },
+  {
+    "id": "fsharp",
+    "name": "F#",
+    "aliases": []
+  },
+  {
+    "id": "factor",
+    "name": "Factor",
+    "aliases": []
+  },
+  {
+    "id": "false",
+    "name": "False",
+    "aliases": []
+  },
+  {
+    "id": "firestore-security-rules",
+    "name": "Firestore security rules",
+    "aliases": []
+  },
+  {
+    "id": "flow",
+    "name": "Flow",
+    "aliases": []
+  },
+  {
+    "id": "fortran",
+    "name": "Fortran",
+    "aliases": []
+  },
+  {
+    "id": "ftl",
+    "name": "FreeMarker Template Language",
+    "aliases": []
+  },
+  {
+    "id": "gcode",
+    "name": "G-code",
+    "aliases": []
+  },
+  {
+    "id": "gml",
+    "name": "GameMaker Language",
+    "aliases": [
+      "gamemakerlanguage"
+    ]
+  },
+  {
+    "id": "gap",
+    "name": "GAP (CAS)",
+    "aliases": []
+  },
+  {
+    "id": "gdscript",
+    "name": "GDScript",
+    "aliases": []
+  },
+  {
+    "id": "gedcom",
+    "name": "GEDCOM",
+    "aliases": []
+  },
+  {
+    "id": "gettext",
+    "name": "gettext",
+    "aliases": [
+      "po"
+    ]
+  },
+  {
+    "id": "gherkin",
+    "name": "Gherkin",
+    "aliases": []
+  },
+  {
+    "id": "git",
+    "name": "Git",
+    "aliases": []
+  },
+  {
+    "id": "glsl",
+    "name": "GLSL",
+    "aliases": []
+  },
+  {
+    "id": "gn",
+    "name": "GN",
+    "aliases": [
+      "gni"
+    ]
+  },
+  {
+    "id": "linker-script",
+    "name": "GNU Linker Script",
+    "aliases": [
+      "ld"
+    ]
+  },
+  {
+    "id": "go",
+    "name": "Go",
+    "aliases": []
+  },
+  {
+    "id": "go-module",
+    "name": "Go module",
+    "aliases": [
+      "go-mod"
+    ]
+  },
+  {
+    "id": "gradle",
+    "name": "Gradle",
+    "aliases": []
+  },
+  {
+    "id": "graphql",
+    "name": "GraphQL",
+    "aliases": []
+  },
+  {
+    "id": "groovy",
+    "name": "Groovy",
+    "aliases": []
+  },
+  {
+    "id": "haml",
+    "name": "Haml",
+    "aliases": []
+  },
+  {
+    "id": "handlebars",
+    "name": "Handlebars",
+    "aliases": [
+      "hbs",
+      "mustache"
+    ]
+  },
+  {
+    "id": "haskell",
+    "name": "Haskell",
+    "aliases": [
+      "hs"
+    ]
+  },
+  {
+    "id": "haxe",
+    "name": "Haxe",
+    "aliases": []
+  },
+  {
+    "id": "hcl",
+    "name": "HCL",
+    "aliases": []
+  },
+  {
+    "id": "hlsl",
+    "name": "HLSL",
+    "aliases": []
+  },
+  {
+    "id": "hoon",
+    "name": "Hoon",
+    "aliases": []
+  },
+  {
+    "id": "http",
+    "name": "HTTP",
+    "aliases": []
+  },
+  {
+    "id": "hpkp",
+    "name": "HTTP Public-Key-Pins",
+    "aliases": []
+  },
+  {
+    "id": "hsts",
+    "name": "HTTP Strict-Transport-Security",
+    "aliases": []
+  },
+  {
+    "id": "ichigojam",
+    "name": "IchigoJam",
+    "aliases": []
+  },
+  {
+    "id": "icon",
+    "name": "Icon",
+    "aliases": []
+  },
+  {
+    "id": "icu-message-format",
+    "name": "ICU Message Format",
+    "aliases": []
+  },
+  {
+    "id": "idris",
+    "name": "Idris",
+    "aliases": [
+      "idr"
+    ]
+  },
+  {
+    "id": "inform7",
+    "name": "Inform 7",
+    "aliases": []
+  },
+  {
+    "id": "ini",
+    "name": "Ini",
+    "aliases": []
+  },
+  {
+    "id": "io",
+    "name": "Io",
+    "aliases": []
+  },
+  {
+    "id": "j",
+    "name": "J",
+    "aliases": []
+  },
+  {
+    "id": "java",
+    "name": "Java",
+    "aliases": []
+  },
+  {
+    "id": "javastacktrace",
+    "name": "Java stack trace",
+    "aliases": []
+  },
+  {
+    "id": "javadoc",
+    "name": "JavaDoc",
+    "aliases": []
+  },
+  {
+    "id": "javadoclike",
+    "name": "JavaDoc-like",
+    "aliases": []
+  },
+  {
+    "id": "javascript",
+    "name": "JavaScript",
+    "aliases": [
+      "js"
+    ]
+  },
+  {
+    "id": "jexl",
+    "name": "Jexl",
+    "aliases": []
+  },
+  {
+    "id": "jolie",
+    "name": "Jolie",
+    "aliases": []
+  },
+  {
+    "id": "jq",
+    "name": "JQ",
+    "aliases": []
+  },
+  {
+    "id": "jsstacktrace",
+    "name": "JS stack trace",
+    "aliases": []
+  },
+  {
+    "id": "jsdoc",
+    "name": "JSDoc",
+    "aliases": []
+  },
+  {
+    "id": "json",
+    "name": "JSON",
+    "aliases": [
+      "webmanifest"
+    ]
+  },
+  {
+    "id": "json5",
+    "name": "JSON5",
+    "aliases": []
+  },
+  {
+    "id": "jsonp",
+    "name": "JSONP",
+    "aliases": []
+  },
+  {
+    "id": "julia",
+    "name": "Julia",
+    "aliases": []
+  },
+  {
+    "id": "keepalived",
+    "name": "Keepalived Configure",
+    "aliases": []
+  },
+  {
+    "id": "keyman",
+    "name": "Keyman",
+    "aliases": []
+  },
+  {
+    "id": "kotlin",
+    "name": "Kotlin",
+    "aliases": [
+      "kt",
+      "kts"
+    ]
+  },
+  {
+    "id": "kumir",
+    "name": "KuMir (КуМир)",
+    "aliases": [
+      "kum"
+    ]
+  },
+  {
+    "id": "kusto",
+    "name": "Kusto",
+    "aliases": []
+  },
+  {
+    "id": "latex",
+    "name": "LaTeX",
+    "aliases": [
+      "tex",
+      "context"
+    ]
+  },
+  {
+    "id": "latte",
+    "name": "Latte",
+    "aliases": []
+  },
+  {
+    "id": "less",
+    "name": "Less",
+    "aliases": []
+  },
+  {
+    "id": "lilypond",
+    "name": "LilyPond",
+    "aliases": [
+      "ly"
+    ]
+  },
+  {
+    "id": "liquid",
+    "name": "Liquid",
+    "aliases": []
+  },
+  {
+    "id": "lisp",
+    "name": "Lisp",
+    "aliases": [
+      "emacs",
+      "elisp",
+      "emacs-lisp"
+    ]
+  },
+  {
+    "id": "livescript",
+    "name": "LiveScript",
+    "aliases": []
+  },
+  {
+    "id": "llvm",
+    "name": "LLVM IR",
+    "aliases": []
+  },
+  {
+    "id": "log",
+    "name": "Log file",
+    "aliases": []
+  },
+  {
+    "id": "lolcode",
+    "name": "LOLCODE",
+    "aliases": []
+  },
+  {
+    "id": "lua",
+    "name": "Lua",
+    "aliases": []
+  },
+  {
+    "id": "magma",
+    "name": "Magma (CAS)",
+    "aliases": []
+  },
+  {
+    "id": "makefile",
+    "name": "Makefile",
+    "aliases": []
+  },
+  {
+    "id": "markdown",
+    "name": "Markdown",
+    "aliases": [
+      "md"
+    ]
+  },
+  {
+    "id": "markup",
+    "name": "Markup",
+    "aliases": [
+      "html",
+      "xml",
+      "svg",
+      "mathml",
+      "ssml",
+      "atom",
+      "rss"
+    ]
+  },
+  {
+    "id": "mata",
+    "name": "Mata",
+    "aliases": []
+  },
+  {
+    "id": "matlab",
+    "name": "MATLAB",
+    "aliases": []
+  },
+  {
+    "id": "maxscript",
+    "name": "MAXScript",
+    "aliases": []
+  },
+  {
+    "id": "mel",
+    "name": "MEL",
+    "aliases": []
+  },
+  {
+    "id": "mermaid",
+    "name": "Mermaid",
+    "aliases": []
+  },
+  {
+    "id": "metafont",
+    "name": "METAFONT",
+    "aliases": []
+  },
+  {
+    "id": "mizar",
+    "name": "Mizar",
+    "aliases": []
+  },
+  {
+    "id": "mongodb",
+    "name": "MongoDB",
+    "aliases": []
+  },
+  {
+    "id": "monkey",
+    "name": "Monkey",
+    "aliases": []
+  },
+  {
+    "id": "moonscript",
+    "name": "MoonScript",
+    "aliases": [
+      "moon"
+    ]
+  },
+  {
+    "id": "n1ql",
+    "name": "N1QL",
+    "aliases": []
+  },
+  {
+    "id": "n4js",
+    "name": "N4JS",
+    "aliases": [
+      "n4jsd"
+    ]
+  },
+  {
+    "id": "nand2tetris-hdl",
+    "name": "Nand To Tetris HDL",
+    "aliases": []
+  },
+  {
+    "id": "naniscript",
+    "name": "Naninovel Script",
+    "aliases": [
+      "nani"
+    ]
+  },
+  {
+    "id": "nasm",
+    "name": "NASM",
+    "aliases": []
+  },
+  {
+    "id": "neon",
+    "name": "NEON",
+    "aliases": []
+  },
+  {
+    "id": "nevod",
+    "name": "Nevod",
+    "aliases": []
+  },
+  {
+    "id": "nginx",
+    "name": "nginx",
+    "aliases": []
+  },
+  {
+    "id": "nim",
+    "name": "Nim",
+    "aliases": []
+  },
+  {
+    "id": "nix",
+    "name": "Nix",
+    "aliases": []
+  },
+  {
+    "id": "nsis",
+    "name": "NSIS",
+    "aliases": []
+  },
+  {
+    "id": "objectivec",
+    "name": "Objective-C",
+    "aliases": [
+      "objc"
+    ]
+  },
+  {
+    "id": "ocaml",
+    "name": "OCaml",
+    "aliases": []
+  },
+  {
+    "id": "odin",
+    "name": "Odin",
+    "aliases": []
+  },
+  {
+    "id": "opencl",
+    "name": "OpenCL",
+    "aliases": []
+  },
+  {
+    "id": "openqasm",
+    "name": "OpenQasm",
+    "aliases": [
+      "qasm"
+    ]
+  },
+  {
+    "id": "oz",
+    "name": "Oz",
+    "aliases": []
+  },
+  {
+    "id": "parigp",
+    "name": "PARI/GP",
+    "aliases": []
+  },
+  {
+    "id": "parser",
+    "name": "Parser",
+    "aliases": []
+  },
+  {
+    "id": "pascal",
+    "name": "Pascal",
+    "aliases": [
+      "objectpascal"
+    ]
+  },
+  {
+    "id": "pascaligo",
+    "name": "Pascaligo",
+    "aliases": []
+  },
+  {
+    "id": "psl",
+    "name": "PATROL Scripting Language",
+    "aliases": []
+  },
+  {
+    "id": "pcaxis",
+    "name": "PC-Axis",
+    "aliases": [
+      "px"
+    ]
+  },
+  {
+    "id": "peoplecode",
+    "name": "PeopleCode",
+    "aliases": [
+      "pcode"
+    ]
+  },
+  {
+    "id": "perl",
+    "name": "Perl",
+    "aliases": []
+  },
+  {
+    "id": "php",
+    "name": "PHP",
+    "aliases": []
+  },
+  {
+    "id": "phpdoc",
+    "name": "PHPDoc",
+    "aliases": []
+  },
+  {
+    "id": "plsql",
+    "name": "PL/SQL",
+    "aliases": []
+  },
+  {
+    "id": "plant-uml",
+    "name": "PlantUML",
+    "aliases": [
+      "plantuml"
+    ]
+  },
+  {
+    "id": "powerquery",
+    "name": "PowerQuery",
+    "aliases": [
+      "pq",
+      "mscript"
+    ]
+  },
+  {
+    "id": "powershell",
+    "name": "PowerShell",
+    "aliases": []
+  },
+  {
+    "id": "processing",
+    "name": "Processing",
+    "aliases": []
+  },
+  {
+    "id": "prolog",
+    "name": "Prolog",
+    "aliases": []
+  },
+  {
+    "id": "promql",
+    "name": "PromQL",
+    "aliases": []
+  },
+  {
+    "id": "protobuf",
+    "name": "Protocol Buffers",
+    "aliases": []
+  },
+  {
+    "id": "pug",
+    "name": "Pug",
+    "aliases": []
+  },
+  {
+    "id": "puppet",
+    "name": "Puppet",
+    "aliases": []
+  },
+  {
+    "id": "pure",
+    "name": "Pure",
+    "aliases": []
+  },
+  {
+    "id": "purebasic",
+    "name": "PureBasic",
+    "aliases": [
+      "pbfasm"
+    ]
+  },
+  {
+    "id": "purescript",
+    "name": "PureScript",
+    "aliases": [
+      "purs"
+    ]
+  },
+  {
+    "id": "python",
+    "name": "Python",
+    "aliases": [
+      "py"
+    ]
+  },
+  {
+    "id": "q",
+    "name": "Q (kdb+ database)",
+    "aliases": []
+  },
+  {
+    "id": "qsharp",
+    "name": "Q#",
+    "aliases": [
+      "qs"
+    ]
+  },
+  {
+    "id": "qml",
+    "name": "QML",
+    "aliases": []
+  },
+  {
+    "id": "qore",
+    "name": "Qore",
+    "aliases": []
+  },
+  {
+    "id": "r",
+    "name": "R",
+    "aliases": []
+  },
+  {
+    "id": "racket",
+    "name": "Racket",
+    "aliases": [
+      "rkt"
+    ]
+  },
+  {
+    "id": "cshtml",
+    "name": "Razor C#",
+    "aliases": [
+      "razor"
+    ]
+  },
+  {
+    "id": "jsx",
+    "name": "React JSX",
+    "aliases": []
+  },
+  {
+    "id": "tsx",
+    "name": "React TSX",
+    "aliases": []
+  },
+  {
+    "id": "reason",
+    "name": "Reason",
+    "aliases": []
+  },
+  {
+    "id": "regex",
+    "name": "Regex",
+    "aliases": []
+  },
+  {
+    "id": "rego",
+    "name": "Rego",
+    "aliases": []
+  },
+  {
+    "id": "renpy",
+    "name": "Ren'py",
+    "aliases": [
+      "rpy"
+    ]
+  },
+  {
+    "id": "rescript",
+    "name": "ReScript",
+    "aliases": [
+      "res"
+    ]
+  },
+  {
+    "id": "rest",
+    "name": "reST (reStructuredText)",
+    "aliases": []
+  },
+  {
+    "id": "rip",
+    "name": "Rip",
+    "aliases": []
+  },
+  {
+    "id": "roboconf",
+    "name": "Roboconf",
+    "aliases": []
+  },
+  {
+    "id": "robotframework",
+    "name": "Robot Framework",
+    "aliases": [
+      "robot"
+    ]
+  },
+  {
+    "id": "ruby",
+    "name": "Ruby",
+    "aliases": [
+      "rb"
+    ]
+  },
+  {
+    "id": "rust",
+    "name": "Rust",
+    "aliases": []
+  },
+  {
+    "id": "sas",
+    "name": "SAS",
+    "aliases": []
+  },
+  {
+    "id": "sass",
+    "name": "Sass (Sass)",
+    "aliases": []
+  },
+  {
+    "id": "scss",
+    "name": "Sass (SCSS)",
+    "aliases": []
+  },
+  {
+    "id": "scala",
+    "name": "Scala",
+    "aliases": []
+  },
+  {
+    "id": "scheme",
+    "name": "Scheme",
+    "aliases": []
+  },
+  {
+    "id": "shell-session",
+    "name": "Shell session",
+    "aliases": [
+      "sh-session",
+      "shellsession"
+    ]
+  },
+  {
+    "id": "smali",
+    "name": "Smali",
+    "aliases": []
+  },
+  {
+    "id": "smalltalk",
+    "name": "Smalltalk",
+    "aliases": []
+  },
+  {
+    "id": "smarty",
+    "name": "Smarty",
+    "aliases": []
+  },
+  {
+    "id": "sml",
+    "name": "SML",
+    "aliases": [
+      "smlnj"
+    ]
+  },
+  {
+    "id": "solidity",
+    "name": "Solidity (Ethereum)",
+    "aliases": [
+      "sol"
+    ]
+  },
+  {
+    "id": "solution-file",
+    "name": "Solution file",
+    "aliases": [
+      "sln"
+    ]
+  },
+  {
+    "id": "soy",
+    "name": "Soy (Closure Template)",
+    "aliases": []
+  },
+  {
+    "id": "sparql",
+    "name": "SPARQL",
+    "aliases": [
+      "rq"
+    ]
+  },
+  {
+    "id": "splunk-spl",
+    "name": "Splunk SPL",
+    "aliases": []
+  },
+  {
+    "id": "sqf",
+    "name": "SQF: Status Quo Function (Arma 3)",
+    "aliases": []
+  },
+  {
+    "id": "sql",
+    "name": "SQL",
+    "aliases": []
+  },
+  {
+    "id": "squirrel",
+    "name": "Squirrel",
+    "aliases": []
+  },
+  {
+    "id": "stan",
+    "name": "Stan",
+    "aliases": []
+  },
+  {
+    "id": "stata",
+    "name": "Stata Ado",
+    "aliases": []
+  },
+  {
+    "id": "iecst",
+    "name": "Structured Text (IEC 61131-3)",
+    "aliases": []
+  },
+  {
+    "id": "stylus",
+    "name": "Stylus",
+    "aliases": []
+  },
+  {
+    "id": "supercollider",
+    "name": "SuperCollider",
+    "aliases": [
+      "sclang"
+    ]
+  },
+  {
+    "id": "swift",
+    "name": "Swift",
+    "aliases": []
+  },
+  {
+    "id": "systemd",
+    "name": "Systemd configuration file",
+    "aliases": []
+  },
+  {
+    "id": "t4-cs",
+    "name": "T4 Text Templates (C#)",
+    "aliases": [
+      "t4"
+    ]
+  },
+  {
+    "id": "t4-vb",
+    "name": "T4 Text Templates (VB)",
+    "aliases": []
+  },
+  {
+    "id": "tap",
+    "name": "TAP",
+    "aliases": []
+  },
+  {
+    "id": "tcl",
+    "name": "Tcl",
+    "aliases": []
+  },
+  {
+    "id": "tt2",
+    "name": "Template Toolkit 2",
+    "aliases": []
+  },
+  {
+    "id": "textile",
+    "name": "Textile",
+    "aliases": []
+  },
+  {
+    "id": "toml",
+    "name": "TOML",
+    "aliases": []
+  },
+  {
+    "id": "tremor",
+    "name": "Tremor",
+    "aliases": [
+      "trickle",
+      "troy"
+    ]
+  },
+  {
+    "id": "turtle",
+    "name": "Turtle",
+    "aliases": [
+      "trig"
+    ]
+  },
+  {
+    "id": "twig",
+    "name": "Twig",
+    "aliases": []
+  },
+  {
+    "id": "typescript",
+    "name": "TypeScript",
+    "aliases": [
+      "ts"
+    ]
+  },
+  {
+    "id": "typoscript",
+    "name": "TypoScript",
+    "aliases": [
+      "tsconfig"
+    ]
+  },
+  {
+    "id": "unrealscript",
+    "name": "UnrealScript",
+    "aliases": [
+      "uscript",
+      "uc"
+    ]
+  },
+  {
+    "id": "uorazor",
+    "name": "UO Razor Script",
+    "aliases": []
+  },
+  {
+    "id": "uri",
+    "name": "URI",
+    "aliases": [
+      "url"
+    ]
+  },
+  {
+    "id": "v",
+    "name": "V",
+    "aliases": []
+  },
+  {
+    "id": "vala",
+    "name": "Vala",
+    "aliases": []
+  },
+  {
+    "id": "vbnet",
+    "name": "VB.Net",
+    "aliases": []
+  },
+  {
+    "id": "velocity",
+    "name": "Velocity",
+    "aliases": []
+  },
+  {
+    "id": "verilog",
+    "name": "Verilog",
+    "aliases": []
+  },
+  {
+    "id": "vhdl",
+    "name": "VHDL",
+    "aliases": []
+  },
+  {
+    "id": "vim",
+    "name": "vim",
+    "aliases": []
+  },
+  {
+    "id": "visual-basic",
+    "name": "Visual Basic",
+    "aliases": [
+      "vb",
+      "vba"
+    ]
+  },
+  {
+    "id": "warpscript",
+    "name": "WarpScript",
+    "aliases": []
+  },
+  {
+    "id": "web-idl",
+    "name": "Web IDL",
+    "aliases": [
+      "webidl"
+    ]
+  },
+  {
+    "id": "wasm",
+    "name": "WebAssembly",
+    "aliases": []
+  },
+  {
+    "id": "wgsl",
+    "name": "WGSL",
+    "aliases": []
+  },
+  {
+    "id": "wiki",
+    "name": "Wiki markup",
+    "aliases": []
+  },
+  {
+    "id": "wolfram",
+    "name": "Wolfram language",
+    "aliases": [
+      "mathematica",
+      "nb",
+      "wl"
+    ]
+  },
+  {
+    "id": "wren",
+    "name": "Wren",
+    "aliases": []
+  },
+  {
+    "id": "xeora",
+    "name": "Xeora",
+    "aliases": [
+      "xeoracube"
+    ]
+  },
+  {
+    "id": "xojo",
+    "name": "Xojo (REALbasic)",
+    "aliases": []
+  },
+  {
+    "id": "xquery",
+    "name": "XQuery",
+    "aliases": []
+  },
+  {
+    "id": "yaml",
+    "name": "YAML",
+    "aliases": [
+      "yml"
+    ]
+  },
+  {
+    "id": "yang",
+    "name": "YANG",
+    "aliases": []
+  },
+  {
+    "id": "zig",
+    "name": "Zig",
+    "aliases": []
+  }
+]

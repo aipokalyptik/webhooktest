@@ -18,9 +18,8 @@ let query = (params.get("q") || "").slice(0, 500);
 let filters = params.get("filters") || "";
 let live = true;
 let activeTab = "body";
-let bodyMode = "pretty";
-let binaryViewer = null;
-let binaryViewState = null;
+let bodyViewer = null;
+let bodyViewState = null;
 let listGeneration = 0;
 let detailGeneration = 0;
 let cleanupGeneration = 0;
@@ -146,14 +145,14 @@ function renderInboxes() {
     .join("");
 }
 const emptyMarkup = $("detail").innerHTML;
-function releaseBinaryViewer() {
-  if (!binaryViewer) return;
-  binaryViewState = binaryViewer.state;
-  binaryViewer.destroy();
-  binaryViewer = null;
+function releaseBodyViewer() {
+  if (!bodyViewer) return;
+  bodyViewState = bodyViewer.state;
+  bodyViewer.destroy();
+  bodyViewer = null;
 }
 function emptyDetail(message = "") {
-  releaseBinaryViewer();
+  releaseBodyViewer();
   current = null;
   $("detail").innerHTML = message
     ? `<div class="empty-detail"><div class="empty-art" aria-hidden="true"><span>?</span></div><h2>Request unavailable</h2><p>${esc(message)}</p></div>`
@@ -210,7 +209,7 @@ async function loadList({ manual = false } = {}) {
   }
 }
 async function selectRequest(id, replace = false) {
-  releaseBinaryViewer();
+  releaseBodyViewer();
   selected = id;
   updateAddress(replace);
   const generation = ++detailGeneration;
@@ -246,7 +245,7 @@ function table(entries) {
   return `<table class="kv-table"><tbody>${entries.map(([key, value]) => `<tr><th scope="row">${esc(key)}</th><td>${esc(value)}</td></tr>`).join("")}</tbody></table>`;
 }
 function renderDetail() {
-  releaseBinaryViewer();
+  releaseBodyViewer();
   if (!current) return;
   const r = current;
   const headerCount = Object.keys(r.headers).length;
@@ -287,34 +286,7 @@ function renderDetail() {
       ["Body encoding", r.body_encoding],
     ]);
   else {
-    const binary = r.body_encoding === "base64";
-    const mode =
-      binary && ["pretty", "raw"].includes(bodyMode) ? "hex" : bodyMode;
-    const modes = [
-      ...(binary
-        ? []
-        : [
-            ["pretty", "Formatted"],
-            ["raw", "Raw"],
-          ]),
-      ["hex", "Hex"],
-      ["base64", "Base64"],
-    ];
-    const display =
-      mode === "base64"
-        ? r.body_base64
-        : mode === "pretty"
-          ? prettyJSON(r.body)
-          : r.body || "";
-    // Text previews are bounded; the virtual hex grid navigates every captured byte.
-    content.innerHTML = `<div class="payload-toolbar">${modes.map(([id, label]) => `<button class="mode-button ${mode === id ? "active" : ""}" data-mode="${id}" aria-pressed="${mode === id}">${label}</button>`).join("")}${mode === "hex" ? "" : `<button class="mode-button" data-detail-action="${mode === "base64" ? "body-base64" : "body"}">Copy ${mode === "base64" ? "Base64" : "body"} ⧉</button>`}<a class="mode-button" href="api.php?action=download&id=${r.id}" download aria-label="Download raw body" title="Download the original body bytes">Download ↓</a><span>${esc(r.content_type.split(";")[0] || "NO CONTENT TYPE")}</span></div>${mode === "hex" ? '<div id="binary-body"></div>' : `<pre class="code-block">${esc(display.slice(0, 100000) || "(empty body)")}</pre>${display.length > 100000 ? '<p class="binary-note">Preview limited to 100,000 characters. Copy, download, or export for the complete body.</p>' : ""}`}<div class="detail-meta"><span>${bytes(r.size)}</span><span>${esc(r.id.slice(0, 12))}…</span><span>Captured in ${esc(r.inbox)}</span></div>`;
-    if (mode === "hex")
-      binaryViewer = new BinaryViewer(
-        $("binary-body"),
-        r,
-        binaryViewState,
-        copy,
-      );
+    bodyViewer = new BodyViewer(content, r, bodyViewState, copy);
   }
 }
 async function sendSample() {
@@ -469,13 +441,6 @@ $("detail").onclick = (e) => {
     $(`tab-${activeTab}`).focus();
     return;
   }
-  const mode = e.target.closest("[data-mode]");
-  if (mode) {
-    bodyMode = mode.dataset.mode;
-    renderDetail();
-    $("detail").querySelector(`[data-mode="${bodyMode}"]`).focus();
-    return;
-  }
   const action = e.target.closest("[data-detail-action]")?.dataset.detailAction;
   if (!action || !current) return;
   if (action === "link") copy(current.permalink);
@@ -492,11 +457,6 @@ $("detail").onclick = (e) => {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  if (action === "body")
-    copy(
-      current.body_encoding === "base64" ? current.body_base64 : current.body,
-    );
-  if (action === "body-base64") copy(current.body_base64);
   if (action === "delete") {
     const id = current.id;
     confirmDelete(

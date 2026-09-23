@@ -28,3 +28,7 @@ jobs:
         run: timeout 30s node tests/test_frontend.cjs
       - name: Binary byte fidelity and search
         run: timeout 30s node tests/test_binary.cjs
+      - name: File identification and multipart inspection
+        run: timeout 30s php tests/test_inspection.php
+      - name: Syntax languages, worker, and text fidelity
+        run: timeout 30s node tests/test_syntax.cjs

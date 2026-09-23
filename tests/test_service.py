@@ -113,7 +113,7 @@ class ServiceTests(unittest.TestCase):
     def test_storage_error_recovers_with_config_php(self):
         root = Path(self.temp.name) / 'storage-recovery'
         (root / '.conf').mkdir(parents=True)
-        for filename in ['.conf/bootstrap.php', '.conf/router.php', '.conf/search.php', 'api.php', 'ingest.php']:
+        for filename in ['.conf/bootstrap.php', '.conf/router.php', '.conf/search.php', '.conf/inspect.php', 'api.php', 'ingest.php']:
             shutil.copyfile(ROOT / filename, root / filename)
         # A regular file cannot be used as a storage directory, even when run as root.
         (root / 'blocked').write_text('not a directory')
@@ -181,6 +181,46 @@ class ServiceTests(unittest.TestCase):
         stored = json.loads(self.capture_path(r).read_text())
         self.assertEqual(stored['body'], r['body'])
         self.assertEqual(stored['version'], 1)
+
+    def test_body_inspection_is_derived_and_keeps_original_bytes(self):
+        payload = b'\x89PNG\r\n\x1a\n' + bytes(range(256))
+        record = self.capture(payload, headers={'Content-Type': 'text/plain', 'Content-Disposition': 'attachment; filename="misleading.js"'})
+        detected = record['inspection']['body']
+        self.assertEqual(detected['kind'], 'binary')
+        self.assertEqual(detected['mime'], 'image/png')
+        self.assertEqual(detected['filename'], 'misleading.js')
+        self.assertTrue(detected['warnings'])
+        self.assertNotIn('inspection', json.loads(self.capture_path(record).read_text()))
+        status, exported = self.api('export', id=record['id'])
+        self.assertEqual(status, 200)
+        self.assertNotIn('inspection', exported)
+        self.assertEqual(base64.b64decode(exported['body_base64']), payload)
+        status, headers, raw = self.http('GET', '/api.php?action=download&id=' + record['id'])
+        self.assertEqual((status, raw), (200, payload))
+        for asset in ['prism.js', 'prism-languages.js', 'body-core.js', 'body-view.js', 'syntax-worker.js', 'body.css']:
+            status, headers, code = self.http('GET', '/index.php?asset=' + asset)
+            self.assertEqual(status, 200, asset)
+            self.assertIn('no-store', headers['cache-control'])
+            self.assertIn('noindex', headers['x-robots-tag'])
+            self.assertIn('text/css' if asset.endswith('.css') else 'text/javascript', headers['content-type'])
+            self.assertTrue(code)
+
+    def test_body_inspection_multipart_source_ranges(self):
+        config = b'{"id":9007199254740993,"enabled":true}\r\n'
+        image = b'\x89PNG\r\n\x1a\n\x00\xff\r\n--fixture-boundaryNOT-A-DELIMITER\r\n'
+        body = (b'--fixture-boundary\r\nContent-Disposition: form-data; name="config"; filename="settings.json"\r\nContent-Type: application/octet-stream\r\n\r\n' + config +
+                b'\r\n--fixture-boundary\r\nContent-Disposition: form-data; name="image"; filename="picture.png"\r\nContent-Type: image/png\r\n\r\n' + image + b'\r\n--fixture-boundary--\r\n')
+        record = self.capture(body, headers={'Content-Type': 'multipart/form-data; boundary="fixture-boundary"'})
+        self.assertEqual(record['inspection']['body']['kind'], 'multipart')
+        parts = record['inspection']['parts']
+        self.assertEqual(len(parts), 2)
+        for part, expected in zip(parts, [config, image]):
+            self.assertEqual(body[part['offset']:part['offset'] + part['length']], expected)
+        self.assertEqual(parts[0]['format'], 'json')
+        self.assertEqual(parts[0]['kind'], 'text')
+        self.assertEqual(parts[1]['mime'], 'image/png')
+        self.assertEqual(parts[1]['kind'], 'binary')
+        self.assertEqual(base64.b64decode(record['body_base64']), body)
 
     def test_shard_layout_and_id_only_lookup(self):
         source = self.capture(inbox='shard-layout')
