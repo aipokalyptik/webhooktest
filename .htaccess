@@ -7,6 +7,5 @@ Options -Indexes
 <IfModule php_module>
     php_flag enable_post_data_reading Off
 </IfModule>
-<FilesMatch "^(\.|config\.local\.php|bootstrap\.php)">
-    Require all denied
-</FilesMatch>
+# One rule protects .conf and all other dotfile/dot-directory paths, including .git.
+RedirectMatch 404 "(^|/)\."

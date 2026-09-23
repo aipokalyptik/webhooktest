@@ -9,7 +9,7 @@ set_exception_handler(function (Throwable $error): void {
     exit(1);
 });
 if ($argc !== 2) {
-    fwrite(STDERR, "Usage: php restore.php /path/to/webhooktest-backup.json\nExisting IDs are preserved. Conflicting records stop the restore before writing.\n");
+    fwrite(STDERR, "Usage: php .conf/restore.php /path/to/webhooktest-backup.json\nExisting IDs are preserved. Conflicting records stop the restore before writing.\n");
     exit(1);
 }
 $backup = json_decode(file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);

@@ -1,0 +1,2 @@
+# Defense in depth for Apache hosts, including configurations without the root redirect.
+Require all denied

@@ -4,6 +4,8 @@ import base64
 import concurrent.futures
 import contextlib
 import http.client
+import hashlib
+import shutil
 import json
 import os
 from pathlib import Path
@@ -26,7 +28,7 @@ class ServiceTests(unittest.TestCase):
             cls.port = listener.getsockname()[1]
         cls.env = dict(os.environ, WEBHOOK_DATA_DIR=str(cls.storage))
         cls.log = open(Path(cls.temp.name) / 'server.log', 'w+')
-        cls.server = subprocess.Popen(['php', '-d', 'enable_post_data_reading=Off', '-S', f'127.0.0.1:{cls.port}', 'router.php'], cwd=ROOT, env=cls.env, stdout=cls.log, stderr=cls.log)
+        cls.server = subprocess.Popen(['php', '-d', 'enable_post_data_reading=Off', '-S', f'127.0.0.1:{cls.port}', '.conf/router.php'], cwd=ROOT, env=cls.env, stdout=cls.log, stderr=cls.log)
         deadline = time.monotonic() + 8
         while time.monotonic() < deadline:
             try:
@@ -76,6 +78,38 @@ class ServiceTests(unittest.TestCase):
         status, record = self.api('request', id=record_id)
         self.assertEqual(status, 200)
         return record
+
+    def test_conf_loading_and_stable_default_storage(self):
+        root = (Path(self.temp.name) / 'config-check').resolve()
+        conf = root / '.conf'
+        conf.mkdir(parents=True)
+        shutil.copyfile(ROOT / '.conf/bootstrap.php', conf / 'bootstrap.php')
+        code = 'require ".conf/bootstrap.php"; echo json_encode(config());'
+        env = dict(self.env)
+        env.pop('WEBHOOK_DATA_DIR', None)
+        env.pop('WEBHOOK_BASE_URL', None)
+        def settings():
+            result = subprocess.run(['php', '-r', code], cwd=root, env=env, capture_output=True, text=True, timeout=5)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return json.loads(result.stdout)
+        expected = str(root.parent / ('.webhooktest-' + hashlib.sha256(str(root).encode()).hexdigest()[:12]))
+        self.assertEqual(settings()['data_dir'], expected)
+        (conf / 'config.local.php').write_text("<?php return ['base_url'=>'https://hooks.example.test/subdir','max_body_bytes'=>1234];")
+        env['WEBHOOK_BASE_URL'] = 'https://overridden.example.test'
+        configured = settings()
+        self.assertEqual(configured['base_url'], 'https://hooks.example.test/subdir')
+        self.assertEqual(configured['max_body_bytes'], 1234)
+        self.assertEqual(configured['data_dir'], expected)
+
+    def test_private_conf_directory_is_not_served(self):
+        for path in ['/.conf/nginx.conf', '/.conf/apache.conf', '/.conf/config.example.php', '/.conf/config.local.php', '/.conf/bootstrap.php', '/.conf/router.php', '/.conf/restore.php', '/%2econf/nginx.conf', '/.git/config']:
+            status, headers, body = self.http('GET', path)
+            self.assertEqual(status, 404, path)
+            self.assertEqual(json.loads(body)['error'], 'Not found.')
+            self.assertIn('no-store', headers['cache-control'])
+        status, _, body = self.http('GET', '/robots.txt')
+        self.assertEqual(status, 200)
+        self.assertEqual(body, (ROOT / 'robots.txt').read_bytes())
 
     def test_raw_headers_metadata_and_downloads(self):
         body = b'{"large":9007199254740993,"message":"space  and\\nlines"}\n'
@@ -200,7 +234,7 @@ class ServiceTests(unittest.TestCase):
         target = Path(self.temp.name) / 'restore-target'
         env = dict(self.env, WEBHOOK_DATA_DIR=str(target))
         def restore():
-            return subprocess.run(['php', 'restore.php', str(backup)], cwd=ROOT, env=env, capture_output=True, timeout=10)
+            return subprocess.run(['php', '.conf/restore.php', str(backup)], cwd=ROOT, env=env, capture_output=True, timeout=10)
         result = restore()
         self.assertEqual(result.returncode, 0, result.stderr)
         restored = json.loads((target / (record['id'] + '.json')).read_text())
@@ -285,7 +319,7 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(self.api('request', id=headers['x-webhook-id'])[1]['method'], 'OPTIONS')
 
     def test_concurrent_process_writers(self):
-        code = 'require "bootstrap.php"; save_capture(["id"=>bin2hex(random_bytes(16)), "inbox"=>"concurrent", "received_at"=>gmdate("c"), "headers"=>(object)[], "body_base64"=>"", "size"=>0]);'
+        code = 'require ".conf/bootstrap.php"; save_capture(["id"=>bin2hex(random_bytes(16)), "inbox"=>"concurrent", "received_at"=>gmdate("c"), "headers"=>(object)[], "body_base64"=>"", "size"=>0]);'
         def writer(_):
             return subprocess.run(['php','-r',code], cwd=ROOT, env=self.env, capture_output=True, timeout=10)
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:

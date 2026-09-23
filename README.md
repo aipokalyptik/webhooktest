@@ -11,7 +11,7 @@ Requires **PHP 8.2+** with its standard JSON functions, a writable local directo
 ```sh
 git clone https://github.com/aipokalyptik/webhooktest.git
 cd webhooktest
-php -d enable_post_data_reading=Off -S 127.0.0.1:8080 router.php
+php -d enable_post_data_reading=Off -S 127.0.0.1:8080 .conf/router.php
 ```
 
 Open **http://127.0.0.1:8080/** and click **Send a test request**, or:
@@ -58,9 +58,17 @@ Search covers request ID, method, URL path/query, content type, header names/val
 
 Upload/clone **the whole repository** into a PHP-enabled webroot, including `.user.ini` and `.htaccess`. There is no `public/` subdirectory and no build output to deploy.
 
+Application configuration, server examples, and private PHP support scripts live in **`.conf/`**. The supplied hosting rules block that directory along with other dot paths; there is no list of internal filenames to maintain.
+
+- `.conf/config.example.php` → `.conf/config.local.php`: optional application settings.
+- `.conf/nginx.conf` and `.conf/apache.conf`: hosting examples.
+- `.conf/bootstrap.php`, `.conf/router.php`, `.conf/restore.php`: private PHP support and command-line tools.
+
+The root `.htaccess` and `.user.ini` are the two discovery files that must stay in the webroot: Apache and PHP read them there automatically. Moving them into `.conf` would require extra server-level setup. They contain only the directory-wide hosting rules and multipart setting.
+
 The default storage location is a sibling directory named `.webhooktest-<path-hash>`, derived from the installation's absolute directory. PHP creates it with owner-only permissions. The parent must be writable by PHP. If your host restricts writing outside the webroot, explicitly configure another persistent writable directory allowed by the host. Keep capture storage outside the webroot.
 
-Configuration is optional. Copy `config.example.php` to **`config.local.php`** (ignored by Git):
+Configuration is optional. Copy [`.conf/config.example.php`](.conf/config.example.php) to **`.conf/config.local.php`** (ignored by Git):
 
 ```php
 <?php
@@ -71,7 +79,7 @@ return [
 ];
 ```
 
-`WEBHOOK_DATA_DIR` and `WEBHOOK_BASE_URL` environment variables are also supported; `config.local.php` takes precedence. Set the full public `base_url`, including a subdirectory if any, when behind a reverse proxy. Proxy forwarding headers are not implicitly trusted. Use a stable `data_dir` when releases change the checkout path; otherwise a new path gets a new default storage directory.
+`WEBHOOK_DATA_DIR` and `WEBHOOK_BASE_URL` environment variables are also supported; `.conf/config.local.php` takes precedence. Set the full public `base_url`, including a subdirectory if any, when behind a reverse proxy. Proxy forwarding headers are not implicitly trusted. Use a stable `data_dir` when releases change the checkout path; otherwise a new path gets a new default storage directory.
 
 The application limit defaults to **10 MiB per request**. Oversize bodies return `413` without saving a partial capture. Your reverse proxy/web server may impose its own lower body limit or reject particular HTTP methods (especially TRACE and CONNECT). No PHP application can recover requests rejected before they reach it.
 
@@ -81,36 +89,13 @@ PHP must have `enable_post_data_reading=Off` **before the request starts** to ex
 
 ### Apache
 
-Use PHP-FPM or mod_php and allow the included `.htaccess` directives (`AllowOverride All` for this directory is the simplest setup). No rewrite module is needed. `.htaccess` also discourages indexing/caching of static responses and blocks dotfiles and internal configuration. If your provider disallows these directives, put the equivalent rules in the virtual host.
+A virtual-host example lives in [`.conf/apache.conf`](.conf/apache.conf). Use PHP-FPM or mod_php and allow the included `.htaccess` directives (`AllowOverride All` for this directory is the simplest setup). No rewrite module is needed. `.htaccess` also discourages indexing/caching of static responses and blocks dotfiles and internal configuration. If your provider disallows these directives, put the equivalent rules in the virtual host.
 
 ### nginx + PHP-FPM
 
-A minimal server block (adjust host, root, and PHP-FPM socket):
+Copy [`.conf/nginx.conf`](.conf/nginx.conf) into your nginx sites configuration and adjust the hostname, webroot, and PHP-FPM socket. It blocks every dot-directory/file path, including `.conf`, with one rule before the PHP handler. No per-file deny list is needed, and the rule also applies when the app is installed in a subdirectory.
 
-```nginx
-server {
-    listen 80;
-    server_name hooks.example.com;
-    root /var/www/webhooktest;
-    index index.php;
-    client_max_body_size 10m;
-
-    add_header X-Robots-Tag "noindex, nofollow, noarchive, nosnippet" always;
-    add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0" always;
-
-    location ~ /\. { deny all; }
-    location ~ ^/(bootstrap|config\.local|config\.example|router|restore)\.php$ { deny all; }
-    location / { try_files $uri $uri/ =404; }
-    location ~ \.php$ {
-        try_files $uri =404;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
-    }
-}
-```
-
-Use your host's ordinary HTTPS configuration. For a subdirectory deployment, adjust the internal-file deny rule to include that prefix. Disable any host/CDN “cache everything” rule for this site.
+Use your host's ordinary HTTPS configuration. Disable any host/CDN “cache everything” rule for this site.
 
 ## JSON storage, backups, and maintenance
 
@@ -131,7 +116,7 @@ Individual deletion is available in the request inspector. Deleted request perma
 To restore a downloaded backup:
 
 ```sh
-php restore.php /path/to/webhooktest-backup.json
+php .conf/restore.php /path/to/webhooktest-backup.json
 ```
 
 The utility uses the same data-directory configuration, validates the backup, preserves IDs, skips identical existing captures, and refuses conflicting IDs before writing. Run it as the same OS user as PHP (or fix file ownership afterward). A failed interrupted write can be retried. For very large backups, raise PHP's CLI memory limit; restoration validates the complete backup in memory.

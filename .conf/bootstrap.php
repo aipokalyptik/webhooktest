@@ -56,10 +56,11 @@ function config(): array
     if ($config !== null) {
         return $config;
     }
+    $root = dirname(__DIR__);
     $local = is_file(__DIR__ . '/config.local.php') ? require __DIR__ . '/config.local.php' : [];
     $config = array_replace([
         // Keep captures out of the public webroot, without depending on web-server rules.
-        'data_dir' => getenv('WEBHOOK_DATA_DIR') ?: dirname(__DIR__) . '/.webhooktest-' . substr(hash('sha256', __DIR__), 0, 12),
+        'data_dir' => getenv('WEBHOOK_DATA_DIR') ?: dirname($root) . '/.webhooktest-' . substr(hash('sha256', $root), 0, 12),
         'base_url' => getenv('WEBHOOK_BASE_URL') ?: '',
         'max_body_bytes' => 10 * 1024 * 1024,
     ], $local);

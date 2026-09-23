@@ -1,4 +1,4 @@
-/config.local.php
+/.conf/config.local.php
 /data/
 /backups/
 .DS_Store

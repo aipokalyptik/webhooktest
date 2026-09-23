@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/.conf/bootstrap.php';
 require_method(['GET', 'HEAD']);
 if (isset($_GET['asset'])) {
     $asset = param('asset');
