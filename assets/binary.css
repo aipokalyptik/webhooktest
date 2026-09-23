@@ -1,0 +1,436 @@
+/* Byte widths and the 28px row height are shared with BinaryViewer's virtual
+   layout. Keep the hex and ASCII tracks fixed so every byte stays aligned. */
+.hex-viewer {
+  container-type: inline-size;
+  min-width: 0;
+  color: var(--ink);
+  --hex-text: #33445d;
+  --hex-zero: #7d8796;
+  --hex-space: #28777a;
+  --hex-control: #985a17;
+  --hex-high: #7252a0;
+}
+.hex-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 22px 0 18px;
+}
+.hex-heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hex-eyebrow {
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  color: #748092;
+  font-weight: 600;
+}
+.hex-heading strong {
+  font-size: 23px;
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+}
+.hex-heading strong span {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #748092;
+}
+.hex-viewer .secondary {
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 8px 11px;
+}
+.hex-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr);
+  gap: 12px;
+}
+.hex-viewer label {
+  font-size: 11px;
+  margin: 0 0 7px;
+  color: #59677b;
+}
+.hex-input-group {
+  display: flex;
+  border: 1px solid #dce2eb;
+  border-radius: 8px;
+  background: white;
+}
+.hex-viewer input,
+.hex-viewer select {
+  font-size: 11px;
+  padding: 8px;
+  width: auto;
+}
+.hex-input-group input {
+  flex: 1;
+  width: 0;
+  font-family: var(--mono);
+}
+.hex-input-group select {
+  border-right: 1px solid var(--line);
+  border-radius: 8px 0 0 8px;
+}
+.hex-input-group input,
+.hex-input-group select,
+.hex-input-group button {
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+}
+.hex-input-group input {
+  border-right: 0;
+}
+.hex-input-group button.secondary {
+  border-right: 0;
+  background: #f5f7fa;
+  border-radius: 0 8px 8px 0;
+}
+.hex-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 0;
+}
+.hex-navigation > div {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 5px;
+  min-width: 160px;
+}
+.hex-nav-button {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid #dce2eb;
+  border-radius: 6px;
+  background: white;
+  font: 15px var(--sans);
+}
+.hex-find-status {
+  color: #657389;
+  font-size: 11px;
+  margin-left: 4px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.hex-find-status.error {
+  color: #b33227;
+}
+.hex-navigation label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  white-space: nowrap;
+  font-weight: 400;
+}
+.hex-navigation select {
+  padding: 5px 7px;
+}
+.hex-grid-shell {
+  border: 1px solid #dce3ed;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #fafbfd;
+}
+.hex-grid-header {
+  width: 100%;
+  overflow: hidden;
+  color: #74829a;
+  background: #f0f3f8;
+  border-bottom: 1px solid #dce3ed;
+}
+.hex-grid-header .hex-row {
+  height: 32px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.hex-scroll {
+  height: 364px;
+  overflow: auto;
+  position: relative;
+  outline: none;
+  scrollbar-color: #b6c3d3 #f0f3f8;
+  overscroll-behavior: contain;
+}
+.hex-scroll:focus-visible {
+  box-shadow: inset 0 0 0 2px #57919f;
+}
+.hex-spacer {
+  position: relative;
+  min-width: var(--hex-width);
+  width: 100%;
+}
+.hex-rows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+.hex-row {
+  display: flex;
+  align-items: center;
+  min-width: var(--hex-width);
+  width: 100%;
+  height: 28px;
+  font: 12px/28px var(--mono);
+  white-space: nowrap;
+}
+.hex-rows .hex-row:nth-child(even) {
+  background: #f1f4f880;
+}
+.hex-address {
+  width: 100px;
+  flex: 0 0 100px;
+  padding: 0 16px;
+  color: #78869b;
+  font-size: 11px;
+  user-select: none;
+}
+.hex-octets,
+.hex-characters {
+  display: flex;
+  flex: 0 0 auto;
+}
+.hex-octets > span {
+  display: inline-block;
+  width: 26px;
+  text-align: center;
+  flex: 0 0 26px;
+}
+.hex-octets > span.hex-group {
+  margin-left: 12px;
+}
+.hex-characters {
+  padding: 0 10px 0 20px;
+}
+.hex-characters > span {
+  display: inline-block;
+  width: 8px;
+  text-align: center;
+  flex: 0 0 8px;
+}
+.hex-ascii-heading {
+  width: calc(var(--hex-columns) * 8px + 30px);
+}
+.hex-byte {
+  cursor: crosshair;
+  user-select: none;
+  height: 24px;
+  line-height: 24px;
+}
+.hex-text {
+  color: var(--hex-text);
+}
+.hex-zero {
+  color: var(--hex-zero);
+}
+.hex-space {
+  color: var(--hex-space);
+}
+.hex-control {
+  color: var(--hex-control);
+}
+.hex-high {
+  color: var(--hex-high);
+}
+.hex-byte.hover {
+  background: #dde8f3;
+}
+.hex-byte.selected {
+  color: #194e5a;
+  background: #d8edf0;
+}
+.hex-byte.cursor {
+  color: #fff;
+  background: #276d7c;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #276d7c;
+}
+.hex-scroll:focus-visible .hex-byte.cursor {
+  outline: 2px solid #172e48;
+  outline-offset: 1px;
+}
+.hex-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 15px;
+  margin: 10px 0 18px;
+  font-size: 10px;
+}
+.hex-selection {
+  padding: 13px 14px;
+  background: #f2f7f8;
+  border: 1px solid #e0ebee;
+  border-radius: 8px;
+}
+.hex-viewer .hex-selection-label {
+  font: 11px/1.6 var(--mono);
+  color: #335966;
+  margin: 0 0 9px;
+  overflow-wrap: anywhere;
+}
+.hex-copy-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.hex-copy-controls select {
+  flex: 1;
+  min-width: 105px;
+}
+.hex-inspector {
+  margin-top: 20px;
+}
+.hex-inspector summary,
+.hex-help summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.hex-cursor-label {
+  display: inline-block;
+  margin-left: 8px;
+  font: 11px var(--mono);
+  color: #657389;
+}
+.hex-inspector-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.hex-inspector-tools label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-weight: 400;
+}
+.hex-inspector-tools select {
+  padding: 5px 7px;
+}
+.hex-inspector-tools > span {
+  font-size: 10px;
+  color: #657389;
+}
+.hex-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--line);
+}
+.hex-values > div {
+  min-width: 0;
+  background: #fff;
+  padding: 10px 12px;
+}
+.hex-values dt {
+  font-size: 10px;
+  color: #6c7890;
+  margin-bottom: 3px;
+}
+.hex-values dd {
+  margin: 0;
+  font: 11px/1.6 var(--mono);
+  color: #354764;
+  overflow-wrap: anywhere;
+}
+.hex-help {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.hex-help summary {
+  font-weight: 400;
+  color: #59677b;
+}
+.hex-viewer .hex-help p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #59677b;
+}
+.hex-empty {
+  margin: 0;
+  padding: 30px 18px;
+  font-size: 12px;
+  white-space: normal;
+  max-width: 350px;
+  color: #657389;
+}
+dialog.hex-expanded {
+  width: min(1300px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  height: calc(100dvh - 48px);
+  max-height: calc(100dvh - 48px);
+  padding: 24px 30px;
+}
+.hex-expanded .hex-heading {
+  margin: 0 32px 20px 0;
+}
+.hex-expanded-close {
+  position: absolute;
+  right: 16px;
+  top: 18px;
+}
+.hex-expanded .hex-scroll {
+  height: clamp(168px, 47dvh, 650px);
+}
+@container (max-width: 580px) {
+  .hex-tools {
+    grid-template-columns: 1fr;
+  }
+  .hex-jump .hex-input-group {
+    max-width: 250px;
+  }
+  .hex-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .detail-body {
+    padding: 18px;
+  }
+  .payload-toolbar {
+    flex-wrap: wrap;
+  }
+  .payload-toolbar > span {
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+  dialog.hex-expanded {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+    padding: 20px 16px;
+  }
+  .hex-scroll {
+    height: 280px;
+  }
+}
+
+.hex-viewer .hex-copy-status {
+  margin: 10px 0 0;
+  color: #335966;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.hex-viewer .hex-copy-status.error {
+  color: #b33227;
+}

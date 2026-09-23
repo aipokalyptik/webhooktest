@@ -19,6 +19,8 @@ let filters = params.get("filters") || "";
 let live = true;
 let activeTab = "body";
 let bodyMode = "pretty";
+let binaryViewer = null;
+let binaryViewState = null;
 let listGeneration = 0;
 let detailGeneration = 0;
 let cleanupGeneration = 0;
@@ -89,23 +91,28 @@ async function copy(value) {
   try {
     await navigator.clipboard.writeText(value);
   } catch {
+    const focused = document.activeElement;
     const input = document.createElement("textarea");
     input.value = value;
     input.style.position = "fixed";
     input.style.opacity = "0";
-    document.body.append(input);
+    // HTTP hosts may lack Clipboard API access. A modal makes the rest of the
+    // document inert, so its fallback textarea must live inside that dialog.
+    (document.querySelector("dialog[open]") || document.body).append(input);
     input.select();
     const ok = document.execCommand("copy");
     input.remove();
+    focused?.focus({ preventScroll: true });
     if (!ok) {
       toast(
         "Copy is unavailable here. Select and copy the text manually.",
         true,
       );
-      return;
+      return false;
     }
   }
   toast("Copied to clipboard");
+  return true;
 }
 function updateAddress(replace = false) {
   const url = new URL(location.href);
@@ -139,7 +146,14 @@ function renderInboxes() {
     .join("");
 }
 const emptyMarkup = $("detail").innerHTML;
+function releaseBinaryViewer() {
+  if (!binaryViewer) return;
+  binaryViewState = binaryViewer.state;
+  binaryViewer.destroy();
+  binaryViewer = null;
+}
 function emptyDetail(message = "") {
+  releaseBinaryViewer();
   current = null;
   $("detail").innerHTML = message
     ? `<div class="empty-detail"><div class="empty-art" aria-hidden="true"><span>?</span></div><h2>Request unavailable</h2><p>${esc(message)}</p></div>`
@@ -196,6 +210,7 @@ async function loadList({ manual = false } = {}) {
   }
 }
 async function selectRequest(id, replace = false) {
+  releaseBinaryViewer();
   selected = id;
   updateAddress(replace);
   const generation = ++detailGeneration;
@@ -231,6 +246,7 @@ function table(entries) {
   return `<table class="kv-table"><tbody>${entries.map(([key, value]) => `<tr><th scope="row">${esc(key)}</th><td>${esc(value)}</td></tr>`).join("")}</tbody></table>`;
 }
 function renderDetail() {
+  releaseBinaryViewer();
   if (!current) return;
   const r = current;
   const headerCount = Object.keys(r.headers).length;
@@ -272,11 +288,33 @@ function renderDetail() {
     ]);
   else {
     const binary = r.body_encoding === "base64";
-    const raw = binary ? r.body_base64 : r.body;
-    const display = bodyMode === "pretty" && !binary ? prettyJSON(raw) : raw;
-    // Large bodies remain available in full via download/export; keep the inspector responsive.
-    const truncated = display.length > 100000;
-    content.innerHTML = `<div class="payload-toolbar">${binary ? '<span style="margin-left:0">BASE64</span>' : `<button class="mode-button ${bodyMode === "pretty" ? "active" : ""}" data-mode="pretty">Formatted</button><button class="mode-button ${bodyMode === "raw" ? "active" : ""}" data-mode="raw">Raw</button>`}<button class="mode-button" data-detail-action="body">Copy ${binary ? "Base64" : "body"} ⧉</button><span>${esc(r.content_type.split(";")[0] || "NO CONTENT TYPE")}</span></div>${binary ? '<p class="binary-note">Binary payload · Base64 preview. Download the raw body for the original bytes.</p>' : ""}<pre class="code-block">${esc(display.slice(0, 100000) || "(empty body)")}</pre>${truncated ? '<p class="binary-note">Preview limited to 100,000 characters. Copy, download, or export for the complete body.</p>' : ""}<div class="detail-meta"><span>${bytes(r.size)}</span><span>${esc(r.id.slice(0, 12))}…</span><span>Captured in ${esc(r.inbox)}</span></div>`;
+    const mode =
+      binary && ["pretty", "raw"].includes(bodyMode) ? "hex" : bodyMode;
+    const modes = [
+      ...(binary
+        ? []
+        : [
+            ["pretty", "Formatted"],
+            ["raw", "Raw"],
+          ]),
+      ["hex", "Hex"],
+      ["base64", "Base64"],
+    ];
+    const display =
+      mode === "base64"
+        ? r.body_base64
+        : mode === "pretty"
+          ? prettyJSON(r.body)
+          : r.body || "";
+    // Text previews are bounded; the virtual hex grid navigates every captured byte.
+    content.innerHTML = `<div class="payload-toolbar">${modes.map(([id, label]) => `<button class="mode-button ${mode === id ? "active" : ""}" data-mode="${id}" aria-pressed="${mode === id}">${label}</button>`).join("")}${mode === "hex" ? "" : `<button class="mode-button" data-detail-action="${mode === "base64" ? "body-base64" : "body"}">Copy ${mode === "base64" ? "Base64" : "body"} ⧉</button>`}<span>${esc(r.content_type.split(";")[0] || "NO CONTENT TYPE")}</span></div>${mode === "hex" ? '<div id="binary-body"></div>' : `<pre class="code-block">${esc(display.slice(0, 100000) || "(empty body)")}</pre>${display.length > 100000 ? '<p class="binary-note">Preview limited to 100,000 characters. Copy, download, or export for the complete body.</p>' : ""}`}<div class="detail-meta"><span>${bytes(r.size)}</span><span>${esc(r.id.slice(0, 12))}…</span><span>Captured in ${esc(r.inbox)}</span></div>`;
+    if (mode === "hex")
+      binaryViewer = new BinaryViewer(
+        $("binary-body"),
+        r,
+        binaryViewState,
+        copy,
+      );
   }
 }
 async function sendSample() {
@@ -458,6 +496,7 @@ $("detail").onclick = (e) => {
     copy(
       current.body_encoding === "base64" ? current.body_base64 : current.body,
     );
+  if (action === "body-base64") copy(current.body_base64);
   if (action === "delete") {
     const id = current.id;
     confirmDelete(

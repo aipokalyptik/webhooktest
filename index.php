@@ -4,7 +4,17 @@ require __DIR__ . '/.conf/bootstrap.php';
 require_method(['GET', 'HEAD']);
 if (isset($_GET['asset'])) {
     $asset = param('asset');
-    $assets = ['app.css' => 'text/css; charset=utf-8', 'app.js' => 'text/javascript; charset=utf-8', 'core.js' => 'text/javascript; charset=utf-8', 'search.js' => 'text/javascript; charset=utf-8', 'mark.svg' => 'image/svg+xml'];
+    $assets = [
+        'app.css' => 'text/css; charset=utf-8',
+        'binary.css' => 'text/css; charset=utf-8',
+        'app.js' => 'text/javascript; charset=utf-8',
+        'core.js' => 'text/javascript; charset=utf-8',
+        'search.js' => 'text/javascript; charset=utf-8',
+        'binary-core.js' => 'text/javascript; charset=utf-8',
+        'binary-view.js' => 'text/javascript; charset=utf-8',
+        'binary-worker.js' => 'text/javascript; charset=utf-8',
+        'mark.svg' => 'image/svg+xml',
+    ];
     if (!isset($assets[$asset])) {
         respond(['error' => 'Asset not found.'], 404);
     }
@@ -24,8 +34,11 @@ header('Content-Type: text/html; charset=utf-8');
     <title>Webhook Test — a little clarity for every request</title>
     <link rel="icon" href="index.php?asset=mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="index.php?asset=app.css" />
+    <link rel="stylesheet" href="index.php?asset=binary.css" />
     <script src="index.php?asset=core.js" defer></script>
     <script src="index.php?asset=search.js" defer></script>
+    <script src="index.php?asset=binary-core.js" defer></script>
+    <script src="index.php?asset=binary-view.js" defer></script>
     <script src="index.php?asset=app.js" defer></script>
   </head>
   <body

@@ -31,7 +31,7 @@ PHP's built-in server is for local development. A public webhook provider needs 
 - Named inboxes with copyable endpoints; inboxes need no provisioning.
 - GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, TRACE, WebDAV methods, and any other method your HTTP server passes to PHP. The receiver has no method allowlist.
 - Exact body bytes for JSON, XML, text, URL-encoded forms, multipart uploads, and binary data.
-- A responsive inspector with formatted/raw body views, headers, repeated query parameters, and request metadata. JSON formatting preserves large numeric IDs and the original number spelling.
+- A responsive inspector with formatted/raw body views, an interactive hex viewer, headers, repeated query parameters, and request metadata. JSON formatting preserves large numeric IDs and the original number spelling.
 - Raw body downloads, complete JSON exports, copyable replay cURL commands, and downloadable replay shell scripts.
 - Live polling (with pause), literal / wildcard / regex search, field filters, JSONPath, 50-item pages, request permalinks, and dynamic search permalinks.
 - Database tools: delete an individual capture, preview and delete older captures, flush one inbox or all inboxes, and download a consistent JSON backup.
@@ -51,6 +51,29 @@ Receiver and viewer are separate, so viewing a request never creates another cap
 | Share a results page | `index.php?inbox=my-test&q=payment&page=2` |
 
 Inbox names contain 1–64 lowercase ASCII letters, digits, hyphens, or underscores, starting with a letter or digit. Omit `inbox` for `default`. The receiver reserves only that query parameter; everything else is captured as supplied. Its raw query string preserves duplicate parameters and original escaping.
+
+## Binary body viewer
+
+Choose **Hex** in the Body tab to inspect the original bytes of any capture, including text and JSON. Binary bodies open in Hex by default; **Base64** remains available. The viewer is read-only: selection, search, and interpretation never change the captured body.
+
+Offsets, hexadecimal bytes, and printable ASCII stay aligned. Selecting a byte highlights both representations, and a color legend distinguishes printable text, whitespace, zeroes, control bytes, and non-ASCII bytes. Other bytes appear as dots in the ASCII column. **Auto** chooses a row width that fits the panel; choose 4, 8, 16, or 32 bytes per row explicitly, or use **Expand** for more room.
+
+| Task | How |
+| --- | --- |
+| Find bytes | Select **Hex bytes** and enter complete pairs, such as `00 FF 2A` or `00ff2a`. |
+| Find text | Select **UTF-8 text** for an exact, case-sensitive byte search. This searches only the open body; it does not filter the inbox. |
+| Repeat a search | Previous/Next or F3 / Shift+F3. Searches wrap at the ends and report when they wrap. A background worker keeps scanning off the UI thread. |
+| Go to an offset | Enter decimal (`32`) or hexadecimal with a `0x` prefix (`0x20`). Offsets start at zero. |
+| Select bytes | Click a hex byte or its ASCII character. Drag, Shift-click, or hold Shift while navigating to extend the range. On touch screens, tap to select and swipe to scroll. |
+| Navigate by keyboard | Arrows move by byte/row; Home/End move within a row; Ctrl/⌘+Home/End move to the first/last byte; Page Up/Down move a screen. Tab leaves the grid. |
+| Copy a range | Choose **Hex bytes**, **Hex dump**, **Base64**, or **UTF-8 text**, then **Copy selection**. Ctrl/⌘+A selects the body and Ctrl/⌘+C copies using the chosen format while the grid has focus. |
+| Save a range | **Save selection** downloads the selected original bytes as a `.bin` file. The filename includes the capture ID and inclusive start/end offsets. |
+
+Clipboard copying is limited to selections of **1 MiB of source bytes**; use **Save selection** for larger ranges. UTF-8 text copying replaces invalid sequences with `�`. Use Hex, Base64, or the raw `.bin` download when every byte must be preserved. Hex dump copying includes original offsets and every selected row, including repeated rows.
+
+The **Interpret bytes at cursor** panel shows bits, signed/unsigned integers, and floating-point values beginning at the selected byte. Switch between little and big endian; `—` means there are not enough remaining bytes for that type. The 64-bit integer values retain their exact precision. Ctrl/⌘+F and Ctrl/⌘+G focus the find and offset controls while the grid has focus; the expandable help inside the viewer explains the controls.
+
+Only visible rows are rendered, so the full body remains navigable without creating a page element for every byte. No new runtime dependencies, external services, or build step are required. Implementation choices and maintenance notes are in [`.conf/BINARY-VIEWER.md`](.conf/BINARY-VIEWER.md).
 
 ## Search
 
@@ -250,8 +273,9 @@ Development checks use Python 3 and Node.js; neither is required to host the ser
 ```sh
 python3 tests/test_service.py
 node tests/test_frontend.cjs
+node tests/test_binary.cjs
 ```
 
-The integration suite starts an isolated PHP server with temporary JSON storage, uses bounded HTTP/process timeouts, and cleans up after itself. It checks HTTP methods, binary/multipart fidelity, headers, body limits, search/pagination, persistence, downloads, backup/restore, age-based deletion, flushing, concurrency, and no-cache/no-index responses. Frontend helper tests cover shell quoting, number precision, binary replay, and large-body replay. GitHub Actions runs against PHP 8.4–8.5.
+The integration suite starts an isolated PHP server with temporary JSON storage, uses bounded HTTP/process timeouts, and cleans up after itself. It checks HTTP methods, binary/multipart fidelity, headers, body limits, search/pagination, persistence, downloads, backup/restore, age-based deletion, flushing, concurrency, and no-cache/no-index responses. Frontend helper tests cover shell quoting, number precision, binary replay, and large-body replay. Binary viewer tests cover exact bytes, copy formats, offset validation, numeric interpretation, worker search and wrapping, 10 MiB range downloads, and clipboard fallbacks inside dialogs. GitHub Actions runs against PHP 8.4–8.5.
 
 MIT licensed.

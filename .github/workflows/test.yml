@@ -26,3 +26,5 @@ jobs:
         run: timeout 90s python3 tests/test_service.py
       - name: Frontend helpers and replay fidelity
         run: timeout 30s node tests/test_frontend.cjs
+      - name: Binary byte fidelity and search
+        run: timeout 30s node tests/test_binary.cjs
