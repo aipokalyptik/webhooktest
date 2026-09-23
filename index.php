@@ -299,10 +299,12 @@ header('Content-Type: text/html; charset=utf-8');
         <div id="cutoff-field">
           <div class="cutoff-heading">Received before</div>
           <div class="cutoff-presets" role="group" aria-label="Quick cleanup cutoffs">
-            <button type="button" class="secondary" data-cutoff-hours="0">Now</button>
-            <button type="button" class="secondary" data-cutoff-hours="1">1 hour ago</button>
-            <button type="button" class="secondary" data-cutoff-hours="24">24 hours ago</button>
-            <button type="button" class="secondary" data-cutoff-hours="168">7 days ago</button>
+            <button type="button" class="secondary" data-cutoff-minutes="0">Now</button>
+            <button type="button" class="secondary" data-cutoff-minutes="1">1 minute ago</button>
+            <button type="button" class="secondary" data-cutoff-minutes="60">1 hour ago</button>
+            <button type="button" class="secondary" data-cutoff-minutes="1440">1 day ago</button>
+            <button type="button" class="secondary" data-cutoff-minutes="10080">1 week ago</button>
+            <button type="button" class="secondary" data-cutoff-minutes="43200" title="30 days ago">1 month ago</button>
           </div>
           <div class="cutoff-inputs">
             <div>

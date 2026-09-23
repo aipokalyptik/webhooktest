@@ -506,8 +506,8 @@ document.querySelectorAll("dialog").forEach((dialog) =>
   }),
 );
 let cleanupInputTimer;
-function setCleanupCutoff(hoursAgo = 0) {
-  const parts = localCutoffParts(new Date(Date.now() - hoursAgo * 3600000));
+function setCleanupCutoff(minutesAgo = 0) {
+  const parts = localCutoffParts(new Date(Date.now() - minutesAgo * 60000));
   $("cleanup-date").value = parts.date;
   $("cleanup-time").value = parts.time;
 }
@@ -533,10 +533,10 @@ $("database-tools").onclick = () => {
     cleanupInputTimer = setTimeout(previewCleanup, 250);
   }),
 );
-document.querySelectorAll("[data-cutoff-hours]").forEach((button) => {
+document.querySelectorAll("[data-cutoff-minutes]").forEach((button) => {
   button.onclick = () => {
     clearTimeout(cleanupInputTimer);
-    setCleanupCutoff(Number(button.dataset.cutoffHours));
+    setCleanupCutoff(Number(button.dataset.cutoffMinutes));
     previewCleanup();
   };
 });

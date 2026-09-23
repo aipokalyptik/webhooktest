@@ -139,7 +139,7 @@ Sharding spreads directory entries; it does not reduce total disk use or elimina
 Open **Database tools** to:
 
 1. **Download backup:** one versioned JSON file containing every inbox. A snapshot is assembled under a shared lock and the lock is released before downloading it.
-2. **Delete older than:** pick the scope and a cutoff, see the matching count and payload size, then confirm. The cutoff starts at the current local time. Inline date/time fields and Now / 1 hour ago / 24 hours ago / 7 days ago shortcuts keep the matching count visible and update it while you edit. The UI shows your timezone, uses a 24-hour clock, and sends UTC. Captures exactly at the cutoff are retained.
+2. **Delete older than:** pick the scope and a cutoff, see the matching count and payload size, then confirm. The cutoff starts at the current local time. Inline date/time fields and Now / 1 minute / 1 hour / 1 day / 1 week / 1 month ago shortcuts (1 month means 30 days) keep the matching count visible and update it while you edit. The UI shows your timezone, uses a 24-hour clock, and sends UTC. Captures exactly at the cutoff are retained.
 3. **Flush:** select “All requests (flush),” then the current inbox or all inboxes. Click “Yes, delete permanently” to confirm, or “Cancel” to keep the requests.
 
 Individual deletion is available in the request inspector. Deleted request permalinks return “Request unavailable”; the API returns `404`. Cleanup previews are dynamic: matching requests arriving before deletion are included. A filesystem failure during multi-file deletion can leave a partially completed cleanup; fix permissions/disk problems and retry.
