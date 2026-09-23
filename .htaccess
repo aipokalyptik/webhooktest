@@ -1,0 +1,12 @@
+DirectoryIndex index.php
+Options -Indexes
+<IfModule mod_headers.c>
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
+</IfModule>
+<IfModule php_module>
+    php_flag enable_post_data_reading Off
+</IfModule>
+<FilesMatch "^(\.|config\.local\.php|bootstrap\.php)">
+    Require all denied
+</FilesMatch>
