@@ -310,7 +310,7 @@ header('Content-Type: text/html; charset=utf-8');
         their storage.
       </p>
     </dialog>
-    <dialog id="confirm-dialog">
+    <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
       <form id="confirm-form">
         <div class="dialog-title">
           <h2 id="confirm-title">Delete requests?</h2>
@@ -323,12 +323,10 @@ header('Content-Type: text/html; charset=utf-8');
           </button>
         </div>
         <p id="confirm-message"></p>
-        <label for="confirm-value" id="confirm-label"></label
-        ><input id="confirm-value" autocomplete="off" required />
         <div class="dialog-actions">
-          <button type="button" class="close-dialog secondary">Cancel</button
+          <button id="confirm-cancel" type="button" class="close-dialog secondary">Cancel</button
           ><button id="confirm-submit" class="danger">
-            Delete permanently
+            Yes, delete permanently
           </button>
         </div>
       </form>

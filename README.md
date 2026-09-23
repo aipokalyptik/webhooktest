@@ -140,7 +140,7 @@ Open **Database tools** to:
 
 1. **Download backup:** one versioned JSON file containing every inbox. A snapshot is assembled under a shared lock and the lock is released before downloading it.
 2. **Delete older than:** pick the scope and a date/time, see the matching count and payload size, then confirm. The UI uses your local time and sends UTC. Captures exactly at the cutoff are retained.
-3. **Flush:** select “All requests (flush),” then the current inbox or all inboxes. Type the inbox name or `all` to confirm.
+3. **Flush:** select “All requests (flush),” then the current inbox or all inboxes. Click “Yes, delete permanently” to confirm, or “Cancel” to keep the requests.
 
 Individual deletion is available in the request inspector. Deleted request permalinks return “Request unavailable”; the API returns `404`. Cleanup previews are dynamic: matching requests arriving before deletion are included. A filesystem failure during multi-file deletion can leave a partially completed cleanup; fix permissions/disk problems and retry.
 

@@ -317,15 +317,12 @@ function openInbox() {
   $("inbox-dialog").showModal();
   $("inbox-name").focus();
 }
-function confirmDelete(title, message, expected, action) {
+function confirmDelete(title, message, action) {
   $("confirm-title").textContent = title;
   $("confirm-message").textContent = message;
-  $("confirm-label").textContent = `Type ${expected} to confirm`;
-  $("confirm-value").value = "";
-  $("confirm-value").setCustomValidity("");
-  confirmAction = { expected, action };
+  confirmAction = action;
   $("confirm-dialog").showModal();
-  $("confirm-value").focus();
+  $("confirm-cancel").focus();
 }
 function cleanupArgs() {
   const args = {
@@ -456,7 +453,6 @@ $("detail").onclick = (e) => {
     confirmDelete(
       "Delete this request?",
       "Its permanent link will stop working. This cannot be undone.",
-      "delete",
       async () => {
         await api({ action: "delete", id }, { method: "DELETE" });
         ++detailGeneration;
@@ -523,7 +519,6 @@ $("cleanup-delete").onclick = () => {
   confirmDelete(
     "Delete matching requests?",
     `${args.scope === "all" ? "Every inbox" : `Inbox “${inbox}”`} will be affected. ${args.before ? `Only requests received before ${new Date(args.before).toLocaleString()} will be deleted.` : "All requests in this scope will be deleted."} Download a backup first if you need one.`,
-    expected,
     async () => {
       const result = await api(args, {
         method: "DELETE",
@@ -546,19 +541,12 @@ $("cleanup-delete").onclick = () => {
     },
   );
 };
-$("confirm-value").oninput = () => $("confirm-value").setCustomValidity("");
 $("confirm-form").onsubmit = async (e) => {
   e.preventDefault();
-  if ($("confirm-value").value !== confirmAction.expected) {
-    $("confirm-value").setCustomValidity(
-      `Type ${confirmAction.expected} exactly.`,
-    );
-    $("confirm-value").reportValidity();
-    return;
-  }
+  if ($("confirm-submit").disabled || !confirmAction) return;
   $("confirm-submit").disabled = true;
   try {
-    await confirmAction.action();
+    await confirmAction();
     $("confirm-dialog").close();
   } catch (error) {
     toast(error.message, true);
