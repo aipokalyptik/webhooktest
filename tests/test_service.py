@@ -79,6 +79,10 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(status, 200)
         return record
 
+    def capture_path(self, record, directory=None):
+        root = directory if directory is not None else self.storage
+        return root / record['inbox'] / record['id'][0] / record['id'][1] / (record['id'] + '.json')
+
     def test_conf_loading_and_stable_default_storage(self):
         root = (Path(self.temp.name) / 'config-check').resolve()
         conf = root / '.conf'
@@ -143,7 +147,7 @@ class ServiceTests(unittest.TestCase):
             config.write_text("<?php return ['data_dir'=>dirname(__DIR__) . '/working'];")
             status, result = request('POST', '/ingest.php', b'capture after storage repair')
             self.assertEqual(status, 201)
-            self.assertTrue((root / 'working' / (result['id'] + '.json')).is_file())
+            self.assertTrue(self.capture_path(result, root / 'working').is_file())
             status, result = request('GET', '/api.php')
             self.assertEqual(status, 200)
             self.assertEqual(result['stats']['total'], 1)
@@ -174,9 +178,70 @@ class ServiceTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertIn('attachment;', headers['content-disposition'])
             self.assertEqual(downloaded if action == 'download' else base64.b64decode(json.loads(downloaded)['body_base64']), body)
-        stored = json.loads((self.storage / (r['id'] + '.json')).read_text())
+        stored = json.loads(self.capture_path(r).read_text())
         self.assertEqual(stored['body'], r['body'])
         self.assertEqual(stored['version'], 1)
+
+    def test_shard_layout_and_id_only_lookup(self):
+        source = self.capture(inbox='shard-layout')
+        template = json.loads(self.capture_path(source).read_text())
+        records = []
+        for inbox, prefix in [('shard-layout', '00'), ('shard-layout', 'ab'), ('shard-layout', 'ff'), ('123', 'ab')]:
+            record = dict(template, id=prefix + os.urandom(15).hex(), inbox=inbox)
+            records.append(record)
+        code = 'require ".conf/bootstrap.php"; foreach(json_decode(stream_get_contents(STDIN),true) as $record) save_capture($record);'
+        result = subprocess.run(['php', '-r', code], input=json.dumps(records), text=True, cwd=ROOT, env=self.env, capture_output=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for record in records:
+            path = self.capture_path(record)
+            self.assertTrue(path.is_file(), str(path))
+            self.assertFalse((self.storage / (record['id'] + '.json')).exists())
+            status, retrieved = self.api('request', id=record['id'])
+            self.assertEqual(status, 200)
+            self.assertEqual(retrieved['body_base64'], record['body_base64'])
+            self.assertEqual(retrieved['inbox'], record['inbox'])
+        status, listing = self.api(inbox='shard-layout')
+        self.assertEqual(status, 200)
+        self.assertEqual(listing['stats']['total'], 4)
+        self.assertIn({'name':'123','count':1}, listing['inboxes'])
+        # Restore detects the same ID even when a backup assigns it to a different inbox.
+        changed = dict(records[0], inbox='conflicting-inbox')
+        backup = Path(self.temp.name) / 'conflicting-inbox-backup.json'
+        backup.write_text(json.dumps({'format':'webhooktest','version':1,'requests':[changed]}))
+        result = subprocess.run(['php', '.conf/restore.php', str(backup)], cwd=ROOT, env=self.env, capture_output=True, timeout=5)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(self.capture_path(changed).exists())
+
+    def test_listing_does_not_decode_other_inbox_payloads(self):
+        selected = self.capture(inbox='isolation-selected')
+        other = self.capture(inbox='isolation-other')
+        path = self.capture_path(other)
+        original = path.read_bytes()
+        try:
+            path.write_text('intentionally unreadable JSON')
+            status, listing = self.api(inbox=selected['inbox'], q='hello')
+            self.assertEqual(status, 200)
+            self.assertEqual(listing['matched'], 1)
+            self.assertIn({'name':other['inbox'], 'count':1}, listing['inboxes'])
+            self.assertEqual(self.api(inbox=other['inbox'])[0], 503)
+        finally:
+            path.write_bytes(original)
+
+    def test_deletion_prunes_only_empty_capture_directories(self):
+        record = self.capture(inbox='prune-inbox')
+        other = self.capture(inbox='keep-inbox')
+        self.assertEqual(self.api('delete', method='DELETE', id=record['id'])[0], 200)
+        self.assertFalse((self.storage / record['inbox']).exists())
+        self.assertTrue(self.capture_path(other).is_file())
+        self.assertTrue((self.storage / '.lock').is_file())
+        record = self.capture(inbox='prune-with-note')
+        note = self.capture_path(record).parent / 'notes.txt'
+        note.write_text('keep this unrelated file')
+        try:
+            self.assertEqual(self.api('delete', method='DELETE', id=record['id'])[0], 200)
+            self.assertEqual(note.read_text(), 'keep this unrelated file')
+        finally:
+            shutil.rmtree(self.storage / record['inbox'])
 
     def test_all_standard_methods(self):
         for method in ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE', 'PROPFIND']:
@@ -222,7 +287,7 @@ class ServiceTests(unittest.TestCase):
         boundary = self.capture(inbox=inbox)
         other = self.capture(inbox='other-retention-inbox')
         for record, date in [(old, '2020-01-01T00:00:00.000000Z'), (boundary, '2021-01-01T00:00:00.000000Z')]:
-            path = self.storage / (record['id'] + '.json')
+            path = self.capture_path(record)
             data = json.loads(path.read_text())
             data['received_at'] = date
             path.write_text(json.dumps(data))
@@ -287,11 +352,11 @@ class ServiceTests(unittest.TestCase):
             return subprocess.run(['php', '.conf/restore.php', str(backup)], cwd=ROOT, env=env, capture_output=True, timeout=10)
         result = restore()
         self.assertEqual(result.returncode, 0, result.stderr)
-        restored = json.loads((target / (record['id'] + '.json')).read_text())
+        restored = json.loads(self.capture_path(record, target).read_text())
         self.assertEqual(restored['body_base64'], record['body_base64'])
         self.assertEqual(restore().returncode, 0)
         restored['body'] = 'conflict'
-        (target / (record['id'] + '.json')).write_text(json.dumps(restored))
+        self.capture_path(record, target).write_text(json.dumps(restored))
         self.assertNotEqual(restore().returncode, 0)
         bad = json.loads(body)
         bad['requests'][0]['id'] = '../../escape'
@@ -346,7 +411,8 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)['deleted'], preview['matching']['count'])
         self.assertEqual(self.api('maintenance', scope='all')[1]['totals']['count'], 0)
-        self.assertFalse(list(self.storage.glob('*.json')))
+        self.assertFalse(list(self.storage.rglob('*.json')))
+        self.assertEqual([path.name for path in self.storage.iterdir()], ['.lock'])
 
     def test_robots_no_cache_and_error_headers(self):
         for path in ['/', '/index.php?asset=app.css', '/index.php?asset=app.js', '/robots.txt', '/api.php', '/api.php?action=missing', '/api.php?id[]=bad', '/api.php?action=request&id=00000000000000000000000000000000', '/.git/config']:
@@ -376,13 +442,14 @@ class ServiceTests(unittest.TestCase):
             results = list(pool.map(writer, range(24)))
         for result in results:
             self.assertEqual(result.returncode, 0, result.stderr)
-        captures = [json.loads(path.read_text()) for path in self.storage.glob('*.json')]
+        captures = [json.loads(path.read_text()) for path in self.storage.rglob('*.json')]
         self.assertEqual(sum(x['inbox'] == 'concurrent' for x in captures), 24)
         # Remove synthetic records which intentionally omit display metadata.
-        for path in self.storage.glob('*.json'):
+        for path in self.storage.rglob('*.json'):
             if json.loads(path.read_text())['inbox'] == 'concurrent':
                 path.unlink()
-        self.assertFalse(list(self.storage.glob('.capture-*')))
+        self.assertFalse(list(self.storage.rglob('.capture-*')))
+        shutil.rmtree(self.storage / 'concurrent')
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

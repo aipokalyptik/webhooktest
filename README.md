@@ -114,11 +114,27 @@ Use your host's ordinary HTTPS configuration. Disable any host/CDN “cache ever
 
 ## JSON storage, backups, and maintenance
 
-Every capture is an indented `<32-character-id>.json` document. It includes metadata, headers, the raw query, original URL, body size, a UTF-8 `body` when representable, and an always-present `body_base64` containing the original bytes. Base64 is authoritative for downloads, including non-UTF-8 and NUL bytes. Text bodies appear in both forms for readability and reliable round trips.
+Captures are stored by inbox, then by the first two hexadecimal characters of their random request ID:
+
+```text
+<data_dir>/
+  default/
+    a/
+      b/
+        abdbcbe0123456789abcdef0123456789.json
+  stripe-sandbox/
+    3/
+      f/
+        3f0123456789abcdef0123456789abcdef.json
+```
+
+The layout is `<data_dir>/<inbox>/<id[0]>/<id[1]>/<id>.json`, with up to 256 leaf directories per inbox, created as needed. Each indented JSON document includes metadata, headers, the raw query, original URL, body size, a UTF-8 `body` when representable, and an always-present `body_base64` containing the original bytes. Base64 is authoritative for downloads, including non-UTF-8 and NUL bytes. Text bodies appear in both forms for readability and reliable round trips.
 
 Writes use a same-directory temporary file and atomic rename. A filesystem lock coordinates capture writes, reads, backups, and cleanup, with a five-second wait limit. Use a **local filesystem** with reliable `flock`/rename semantics, not a shared network mount. Normal failed writes do not expose partial JSON documents; this is not a promise of power-loss durability without filesystem-level backups. Do not edit files while the service is running.
 
-Search scans JSON files and is intended for small testing workspaces, not a high-volume event archive. Large histories or large bodies increase search/polling time. There is no separate index to corrupt or rebuild. A malformed capture fails the operation with `503` and logs the problem rather than silently omitting history. Files with unrelated names are ignored.
+Listing and search decode JSON files only in the selected inbox; sidebar counts enumerate filenames in the other inboxes without reading their payloads. ID-only request links probe the matching shard in each inbox, without scanning JSON bodies. Backup and workspace-wide storage tools walk all inboxes and shards. Restore writes the same sharded layout, and deletions remove empty shard/inbox directories while retaining the data root and lock.
+
+Sharding spreads directory entries; it does not reduce total disk use or eliminate the selected inbox's search scan. Large histories or large bodies still increase search/polling time. There is no separate index to maintain. An operation that reads a malformed capture fails with `503` and logs the problem. Only files matching the inbox/hex/hex/ID layout are recognized; unrelated paths and symlinks are ignored.
 
 Open **Database tools** to:
 

@@ -38,31 +38,17 @@ foreach ($backup['requests'] as $record) {
 $count = storage(function (string $directory) use ($records): int {
     $new = [];
     foreach ($records as $id => $record) {
-        $path = $directory . '/' . $id . '.json';
-        if (is_file($path)) {
-            if (read_capture($path) != $record) {
+        $path = find_capture_path($directory, $id);
+        if ($path !== null) {
+            if (read_stored_capture($directory, $path) != $record) {
                 throw new RuntimeException('Existing capture differs: ' . $id . '. Restore to an empty directory or resolve the conflict.');
             }
         } else {
             $new[$id] = $record;
         }
     }
-    foreach ($new as $id => $record) {
-        $record['headers'] = (object) $record['headers'];
-        $json = json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
-        $temporary = tempnam($directory, '.capture-');
-        if ($temporary === false) {
-            throw new RuntimeException('Cannot create restore file.');
-        }
-        try {
-            if (file_put_contents($temporary, $json) !== strlen($json) || !rename($temporary, $directory . '/' . $id . '.json')) {
-                throw new RuntimeException('Cannot restore capture. Retry after fixing storage; already restored records will be skipped.');
-            }
-        } finally {
-            if (is_file($temporary)) {
-                unlink($temporary);
-            }
-        }
+    foreach ($new as $record) {
+        write_capture($directory, $record);
     }
     return count($new);
 }, true);

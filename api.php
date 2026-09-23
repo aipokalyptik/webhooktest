@@ -19,11 +19,13 @@ if ($action === 'list') {
         $inboxes = [];
         $stats = ['total' => 0, 'bytes' => 0, 'latest' => null];
         foreach (capture_files($directory) as $path) {
-            $record = read_capture($path);
-            $inboxes[$record['inbox']] = ($inboxes[$record['inbox']] ?? 0) + 1;
-            if ($record['inbox'] !== $name) {
+            $folderInbox = capture_folder_inbox($path);
+            if ($folderInbox !== $name) {
+                $inboxes[$folderInbox] = ($inboxes[$folderInbox] ?? 0) + 1;
                 continue;
             }
+            $record = read_stored_capture($directory, $path);
+            $inboxes[$record['inbox']] = ($inboxes[$record['inbox']] ?? 0) + 1;
             $stats['total']++;
             $stats['bytes'] += $record['size'];
             $stats['latest'] = max($stats['latest'] ?? '', $record['received_at']);
@@ -40,7 +42,7 @@ if ($action === 'list') {
         $pages = max(1, (int) ceil($matched / 50));
         $page = min($page, $pages);
         ksort($inboxes);
-        return ['requests' => array_slice($items, ($page - 1) * 50, 50), 'matched' => $matched, 'page' => $page, 'pages' => $pages, 'stats' => $stats, 'inboxes' => array_map(fn ($name, $count) => ['name' => $name, 'count' => $count], array_keys($inboxes), array_values($inboxes)), 'max_body_bytes' => config()['max_body_bytes']];
+        return ['requests' => array_slice($items, ($page - 1) * 50, 50), 'matched' => $matched, 'page' => $page, 'pages' => $pages, 'stats' => $stats, 'inboxes' => array_map(fn ($name, $count) => ['name' => (string) $name, 'count' => $count], array_keys($inboxes), array_values($inboxes)), 'max_body_bytes' => config()['max_body_bytes']];
     });
     respond($data);
 }
@@ -50,13 +52,14 @@ if (in_array($action, ['request', 'download', 'export', 'delete'], true)) {
     $id = request_id();
     if ($action === 'delete') {
         $deleted = storage(function (string $directory) use ($id): bool {
-            $path = $directory . '/' . $id . '.json';
-            if (!is_file($path)) {
+            $path = find_capture_path($directory, $id);
+            if ($path === null) {
                 return false;
             }
             if (!unlink($path)) {
                 throw new RuntimeException('Cannot delete capture.');
             }
+            prune_capture_directories($directory, $path);
             return true;
         }, true);
         respond($deleted ? ['ok' => true] : ['error' => 'This request was deleted or does not exist.'], $deleted ? 200 : 404);
@@ -110,7 +113,7 @@ if ($action === 'maintenance' || $action === 'clear') {
         $storageBytes = 0;
         $paths = [];
         foreach (capture_files($directory) as $path) {
-            $record = read_capture($path);
+            $record = read_stored_capture($directory, $path);
             $totals['count']++;
             $totals['bytes'] += $record['size'];
             $storageBytes += filesize($path);
@@ -126,6 +129,7 @@ if ($action === 'maintenance' || $action === 'clear') {
                 if (!unlink($path)) {
                     throw new RuntimeException('Cleanup interrupted; some matching files may already be deleted.');
                 }
+                prune_capture_directories($directory, $path);
             }
             return ['ok' => true, 'deleted' => count($paths)];
         }
@@ -152,7 +156,7 @@ if ($action === 'backup') {
             $write('{"format":"webhooktest","version":1,"exported_at":' . json_encode(gmdate('Y-m-d\TH:i:s\Z')) . ',"requests":[');
             $first = true;
             foreach (capture_files($directory) as $file) {
-                $record = read_capture($file);
+                $record = read_stored_capture($directory, $file);
                 $record['headers'] = (object) $record['headers'];
                 $write(($first ? '' : ',') . json_encode($record, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
                 $first = false;
