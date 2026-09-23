@@ -1,6 +1,19 @@
+/* Token colors retain distinct hues and readable contrast on the code surface. */
+html[data-theme="dark"] {
+  --warning-text: #edc180;
+  --syntax-comment: #96a6bd;
+  --syntax-punctuation: #b5c1d2;
+  --syntax-property: #f3a7b5;
+  --syntax-number: #efc17f;
+  --syntax-string: #92d5b7;
+  --syntax-operator: #c1b4ed;
+  --syntax-keyword: #9fc5ff;
+  --syntax-function: #d5b0ed;
+  --syntax-regex: #f4b289;
+}
 .body-source-label {
   margin: 0 0 14px;
-  color: #59677b;
+  color: var(--text-secondary, #59677b);
   font-size: 11px;
 }
 .body-source-select {
@@ -10,10 +23,10 @@
   font-size: 12px;
 }
 .body-detection {
-  border: 1px solid #e1e7ed;
+  border: 1px solid var(--border-strong, #e1e7ed);
   border-radius: 8px;
   margin-bottom: 15px;
-  background: #f8fafc;
+  background: var(--surface-code, #f8fafc);
   padding: 10px 12px;
 }
 .body-detection summary {
@@ -30,7 +43,7 @@
 }
 .body-detection summary::before {
   content: "▸";
-  color: #74849a;
+  color: var(--text-muted, #74849a);
 }
 .body-detection[open] summary::before {
   content: "▾";
@@ -44,17 +57,17 @@
   font-size: 8px;
   letter-spacing: 0.6px;
   border-radius: 4px;
-  background: #e4f2ed;
-  color: #2e7160;
+  background: var(--success-bg, #e4f2ed);
+  color: var(--success-text, #2e7160);
   padding: 3px 5px;
 }
 .body-kind.is-binary {
-  background: #ece8f6;
-  color: #735396;
+  background: var(--purple-bg, #ece8f6);
+  color: var(--purple-text, #735396);
 }
 .body-detection-why {
   margin-left: auto;
-  color: #61738b;
+  color: var(--text-secondary, #61738b);
   font-size: 10px;
 }
 .body-detection dl {
@@ -64,22 +77,22 @@
   display: grid;
   grid-template-columns: minmax(85px, 1fr) minmax(0, 3fr);
   gap: 12px;
-  border-top: 1px solid #e8edf3;
+  border-top: 1px solid var(--border-soft, #e8edf3);
   padding: 8px 0;
   font-size: 11px;
 }
 .body-detection dt {
-  color: #687c91;
+  color: var(--text-secondary, #687c91);
 }
 .body-detection dd {
   margin: 0;
   overflow-wrap: anywhere;
-  color: #354764;
+  color: var(--text-strong, #354764);
 }
 .body-detection p,
 .body-encoding-note {
   font-size: 11px;
-  color: #59677b;
+  color: var(--text-secondary, #59677b);
   margin: 10px 0 0;
 }
 .body-syntax-controls {
@@ -96,7 +109,7 @@
   gap: 9px;
   font-size: 11px;
   font-weight: 400;
-  color: #59677b;
+  color: var(--text-secondary, #59677b);
   margin: 0;
 }
 .body-language {
@@ -106,16 +119,16 @@
 }
 .body-wrap {
   width: auto;
-  accent-color: #d9512b;
+  accent-color: var(--accent, #d9512b);
 }
 .body-code {
-  color: #394b65;
+  color: var(--code-text, #394b65);
   font-size: 12px;
   line-height: 1.8;
   max-height: 540px;
 }
 .body-code:focus-visible {
-  outline: 2px solid #e6a184;
+  outline: 2px solid var(--focus-ring, #e6a184);
   outline-offset: 2px;
 }
 .body-code code {
@@ -130,7 +143,7 @@
 }
 .body-render-status,
 .body-copy-status {
-  color: #657389;
+  color: var(--text-secondary, #657389);
   font-size: 10px;
   line-height: 1.6;
   margin: 10px 0 0;
@@ -140,7 +153,7 @@
 }
 .body-warning,
 .body-detection .body-warning {
-  color: #956318;
+  color: var(--warning-text, #956318);
   font-size: 11px;
   line-height: 1.6;
 }
@@ -151,11 +164,11 @@
 }
 .body-guide summary {
   cursor: pointer;
-  color: #59677b;
+  color: var(--text-secondary, #59677b);
   font-size: 11px;
 }
 .body-guide p {
-  color: #59677b;
+  color: var(--text-secondary, #59677b);
   font-size: 12px;
   line-height: 1.8;
 }
@@ -165,22 +178,22 @@
 .body-code .token.prolog,
 .body-code .token.doctype,
 .body-code .token.cdata {
-  color: #748096;
+  color: var(--syntax-comment, #748096);
   font-style: italic;
 }
 .body-code .token.punctuation {
-  color: #69798a;
+  color: var(--syntax-punctuation, #69798a);
 }
 .body-code .token.property,
 .body-code .token.tag,
 .body-code .token.symbol,
 .body-code .token.deleted {
-  color: #a34359;
+  color: var(--syntax-property, #a34359);
 }
 .body-code .token.boolean,
 .body-code .token.number,
 .body-code .token.constant {
-  color: #976010;
+  color: var(--syntax-number, #976010);
 }
 .body-code .token.selector,
 .body-code .token.attr-name,
@@ -188,26 +201,26 @@
 .body-code .token.char,
 .body-code .token.builtin,
 .body-code .token.inserted {
-  color: #237b64;
+  color: var(--syntax-string, #237b64);
 }
 .body-code .token.operator,
 .body-code .token.entity,
 .body-code .token.url {
-  color: #705397;
+  color: var(--syntax-operator, #705397);
 }
 .body-code .token.atrule,
 .body-code .token.attr-value,
 .body-code .token.keyword {
-  color: #3462a7;
+  color: var(--syntax-keyword, #3462a7);
 }
 .body-code .token.function,
 .body-code .token.class-name {
-  color: #8651a0;
+  color: var(--syntax-function, #8651a0);
 }
 .body-code .token.regex,
 .body-code .token.important,
 .body-code .token.variable {
-  color: #a45c24;
+  color: var(--syntax-regex, #a45c24);
 }
 .body-code .token.important,
 .body-code .token.bold {

@@ -565,7 +565,7 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual([path.name for path in self.storage.iterdir()], ['.lock'])
 
     def test_robots_no_cache_and_error_headers(self):
-        for path in ['/', '/index.php?asset=app.css', '/index.php?asset=app.js', '/robots.txt', '/api.php', '/api.php?action=missing', '/api.php?id[]=bad', '/api.php?action=request&id=00000000000000000000000000000000', '/.git/config']:
+        for path in ['/', '/index.php?asset=app.css', '/index.php?asset=app.js', '/index.php?asset=theme.js', '/robots.txt', '/api.php', '/api.php?action=missing', '/api.php?id[]=bad', '/api.php?action=request&id=00000000000000000000000000000000', '/.git/config']:
             status, headers, _ = self.http('GET', path)
             self.assertIn('no-store', headers['cache-control'], path)
             self.assertIn('noindex', headers['x-robots-tag'], path)

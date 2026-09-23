@@ -9,6 +9,7 @@ if (isset($_GET['asset'])) {
         'binary.css' => 'text/css; charset=utf-8',
         'body.css' => 'text/css; charset=utf-8',
         'app.js' => 'text/javascript; charset=utf-8',
+        'theme.js' => 'text/javascript; charset=utf-8',
         'body-core.js' => 'text/javascript; charset=utf-8',
         'body-view.js' => 'text/javascript; charset=utf-8',
         'syntax-worker.js' => 'text/javascript; charset=utf-8',
@@ -38,6 +39,7 @@ header('Content-Type: text/html; charset=utf-8');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
     <meta name="color-scheme" content="light" />
+    <script src="index.php?asset=theme.js"></script>
     <title>Webhook Test — a little clarity for every request</title>
     <link rel="icon" href="index.php?asset=mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="index.php?asset=app.css" />
@@ -104,7 +106,14 @@ header('Content-Type: text/html; charset=utf-8');
           Workspace <span class="slash">/</span>
           <strong id="breadcrumb">default</strong>
         </div>
-        <span class="public-note">↗ Open testing workspace</span>
+        <div class="topbar-actions">
+          <span class="public-note">↗ Open testing workspace</span>
+          <button id="theme-toggle" class="theme-toggle" type="button" title="Switch to dark theme">
+            <svg data-theme-icon="dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z" /></svg>
+            <svg data-theme-icon="light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></svg>
+            <span class="theme-toggle-label">Dark theme</span>
+          </button>
+        </div>
       </header>
       <div class="main-content">
         <div class="page-heading">

@@ -38,6 +38,8 @@ PHP's built-in server is for local development. A public webhook provider needs 
 - No automatic expiry. Deleting files immediately releases their space; no vacuum or compaction is needed.
 - No external fonts, CDNs, analytics, or network dependencies. JSONPath and PrismJS are bundled locally with their licenses.
 
+The app starts in light mode. Use **Dark theme** in the top bar to switch; the button becomes **Light theme** to switch back. Your browser remembers the choice for this site and keeps other open tabs in sync. No account or server setting is needed.
+
 ## URLs
 
 Receiver and viewer are separate, so viewing a request never creates another capture. Nothing requires URL rewriting, including installations in a subdirectory.
