@@ -791,6 +791,7 @@ main {
 }
 .payload-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin-bottom: 12px;
@@ -807,6 +808,8 @@ main {
   padding: 4px 8px;
   background: none;
   color: #8b96a5;
+  text-decoration: none;
+  white-space: nowrap;
 }
 .mode-button.active {
   background: #f0f3f7;
