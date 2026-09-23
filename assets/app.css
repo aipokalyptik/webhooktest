@@ -992,6 +992,34 @@ dialog small {
 .cleanup .notice {
   font-size: 11px;
 }
+.cutoff-heading {
+  font-size: 12px;
+  font-weight: 600;
+}
+.cutoff-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+.cutoff-presets button {
+  padding: 7px 10px;
+  font-size: 10px;
+}
+.cutoff-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cutoff-inputs input {
+  font-family: var(--mono);
+}
+#cutoff-field {
+  margin-bottom: 18px;
+}
+#cleanup-preview {
+  min-height: 62px;
+}
 .api-help {
   font-size: 11px;
 }

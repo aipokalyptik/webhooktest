@@ -66,3 +66,39 @@ for (const body of [
 console.log(
   "Frontend helpers: precision, escaping, binary and large replay bodies passed.",
 );
+
+// The cleanup cutoff must stay in local time, including fractional UTC offsets.
+for (const timezone of ["UTC", "America/Los_Angeles", "Asia/Kathmandu"]) {
+  execFileSync(
+    process.execPath,
+    [
+      "-e",
+      `
+    const assert = require('node:assert/strict');
+    const {localCutoffParts, parseLocalCutoff} = require('./assets/core.js');
+    for (const instant of ['2026-09-23T17:23:45Z', '2026-01-01T00:15:20Z', '2026-03-08T10:30:00Z']) {
+      const expected = new Date(instant);
+      const parts = localCutoffParts(expected);
+      assert.equal(parseLocalCutoff(parts.date, parts.time).toISOString(), expected.toISOString());
+    }
+    assert.equal(parseLocalCutoff('2026-02-30', '12:00:00'), null);
+    assert.equal(parseLocalCutoff('2026-09-23', '24:00:00'), null);
+    assert.equal(parseLocalCutoff('', ''), null);
+    assert.equal(parseLocalCutoff('2026-09-23', 'bad'), null);
+    assert.equal(parseLocalCutoff('2026-09-23', '12:34').getSeconds(), 0);
+    if (process.env.TZ === 'America/Los_Angeles') {
+      assert.equal(parseLocalCutoff('2026-03-08', '02:30:00'), null);
+      assert.deepEqual(localCutoffParts(new Date('2026-09-23T17:23:45Z')), {date:'2026-09-23',time:'10:23:45'});
+    }
+  `,
+    ],
+    {
+      cwd: require("node:path").resolve(__dirname, ".."),
+      env: { ...process.env, TZ: timezone },
+      timeout: 5000,
+    },
+  );
+}
+console.log(
+  "Cleanup date/time: timezone round trips, invalid dates, and DST gap checks passed.",
+);

@@ -293,13 +293,29 @@ header('Content-Type: text/html; charset=utf-8');
             </select>
           </div>
         </div>
-        <div id="cutoff-field">
-          <label for="cleanup-before">Received before (your local time)</label
-          ><input id="cleanup-before" type="datetime-local" />
-        </div>
-        <p id="cleanup-preview" class="notice">
-          Choose a cutoff to preview the cleanup.
+        <p id="cleanup-preview" class="notice" role="status" aria-live="polite">
+          Checking matching requests…
         </p>
+        <div id="cutoff-field">
+          <div class="cutoff-heading">Received before</div>
+          <div class="cutoff-presets" role="group" aria-label="Quick cleanup cutoffs">
+            <button type="button" class="secondary" data-cutoff-hours="0">Now</button>
+            <button type="button" class="secondary" data-cutoff-hours="1">1 hour ago</button>
+            <button type="button" class="secondary" data-cutoff-hours="24">24 hours ago</button>
+            <button type="button" class="secondary" data-cutoff-hours="168">7 days ago</button>
+          </div>
+          <div class="cutoff-inputs">
+            <div>
+              <label for="cleanup-date">Date (YYYY-MM-DD)</label>
+              <input id="cleanup-date" type="text" maxlength="10" placeholder="YYYY-MM-DD" autocomplete="off" spellcheck="false" aria-describedby="cleanup-timezone" />
+            </div>
+            <div>
+              <label for="cleanup-time">Time (HH:MM:SS)</label>
+              <input id="cleanup-time" type="text" maxlength="8" placeholder="HH:MM:SS" autocomplete="off" spellcheck="false" aria-describedby="cleanup-timezone" />
+            </div>
+          </div>
+          <small id="cleanup-timezone"></small>
+        </div>
         <button id="cleanup-delete" class="danger" disabled>
           Delete matching requests
         </button>

@@ -72,5 +72,31 @@ function replayCurl(r) {
   return `php -r 'echo base64_decode(stream_get_contents(STDIN));' <<'WEBHOOK_BODY' | \\\n${command.join(" \\\n")}\n${r.body_base64.match(/.{1,76}/g)?.join("\n") || ""}\nWEBHOOK_BODY`;
 }
 
+// Use local components directly; offset arithmetic breaks around DST changes.
+function localCutoffParts(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return {
+    date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    time: `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`,
+  };
+}
+
+function parseLocalCutoff(date, time) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}(:\d{2})?$/.test(time))
+    return null;
+  const fullTime = time.length === 5 ? `${time}:00` : time;
+  const parsed = new Date(`${date}T${fullTime}`);
+  if (!Number.isFinite(parsed.getTime())) return null;
+  const parts = localCutoffParts(parsed);
+  // Reject calendar overflow and nonexistent local times (the spring DST gap).
+  return parts.date === date && parts.time === fullTime ? parsed : null;
+}
+
 if (typeof module !== "undefined")
-  module.exports = { prettyJSON, replayCurl, shellQuote };
+  module.exports = {
+    prettyJSON,
+    replayCurl,
+    shellQuote,
+    localCutoffParts,
+    parseLocalCutoff,
+  };

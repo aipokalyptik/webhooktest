@@ -331,8 +331,11 @@ function cleanupArgs() {
     inbox,
   };
   if ($("cleanup-kind").value === "older") {
-    const date = new Date($("cleanup-before").value);
-    if (!Number.isFinite(date.getTime())) return null;
+    const date = parseLocalCutoff(
+      $("cleanup-date").value,
+      $("cleanup-time").value,
+    );
+    if (!date) return null;
     args.before = date.toISOString().replace(/\.\d{3}Z$/, "Z");
   }
   return args;
@@ -344,7 +347,7 @@ async function previewCleanup() {
   const args = cleanupArgs();
   if (!args) {
     $("cleanup-preview").textContent =
-      "Choose a cutoff to preview the cleanup.";
+      "Enter a valid date (YYYY-MM-DD) and local time (HH:MM or HH:MM:SS).";
     return;
   }
   $("cleanup-preview").textContent = "Checking matching requests…";
@@ -502,16 +505,41 @@ document.querySelectorAll("dialog").forEach((dialog) =>
     }
   }),
 );
+let cleanupInputTimer;
+function setCleanupCutoff(hoursAgo = 0) {
+  const parts = localCutoffParts(new Date(Date.now() - hoursAgo * 3600000));
+  $("cleanup-date").value = parts.date;
+  $("cleanup-time").value = parts.time;
+}
 $("database-tools").onclick = () => {
-  const date = new Date(Date.now() - 30 * 86400000);
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-  $("cleanup-before").value = date.toISOString().slice(0, 16);
+  setCleanupCutoff();
+  $("cleanup-timezone").textContent =
+    `Local time · ${Intl.DateTimeFormat().resolvedOptions().timeZone} · 24-hour clock`;
   $("tools-dialog").showModal();
   previewCleanup();
 };
-["cleanup-scope", "cleanup-kind", "cleanup-before"].forEach((id) =>
+["cleanup-scope", "cleanup-kind"].forEach((id) =>
   $(id).addEventListener("change", previewCleanup),
 );
+["cleanup-date", "cleanup-time"].forEach((id) =>
+  $(id).addEventListener("input", () => {
+    // Immediately invalidate the old preview so it cannot enable a different cutoff.
+    ++cleanupGeneration;
+    $("cleanup-delete").disabled = true;
+    clearTimeout(cleanupInputTimer);
+    $("cleanup-preview").textContent = cleanupArgs()
+      ? "Checking matching requests…"
+      : "Enter a valid date (YYYY-MM-DD) and local time (HH:MM or HH:MM:SS).";
+    cleanupInputTimer = setTimeout(previewCleanup, 250);
+  }),
+);
+document.querySelectorAll("[data-cutoff-hours]").forEach((button) => {
+  button.onclick = () => {
+    clearTimeout(cleanupInputTimer);
+    setCleanupCutoff(Number(button.dataset.cutoffHours));
+    previewCleanup();
+  };
+});
 $("cleanup-delete").onclick = () => {
   const args = cleanupArgs();
   if (!args) return;
