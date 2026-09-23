@@ -1,0 +1,3 @@
+/.conf/vendor/** linguist-vendored
+# Unified patches use a space for blank context lines.
+*.patch -whitespace

@@ -2,11 +2,11 @@
 
 A small, self-hosted workbench for the “what did it actually send?” moments.
 
-Send any payload to a named inbox, inspect the body and request headers, search your captures, and share permanent links. **Plain PHP. Plain JSON files. No database server, dependencies, package installation, or build step. The repository root is the webroot.**
+Send any payload to a named inbox, inspect the body and request headers, search your captures, and share permanent links. **Plain PHP. Plain JSON files. No database server, package installation, or build step. The repository root is the webroot.**
 
 ## Start in seconds
 
-Requires **PHP 8.2+** with its standard JSON functions, a writable local directory, and a modern browser. No PHP database extensions are required.
+Requires **PHP 8.4+** with its standard JSON functions, a writable local directory, and a modern browser. No PHP database extensions are required.
 
 ```sh
 git clone https://github.com/aipokalyptik/webhooktest.git
@@ -33,10 +33,10 @@ PHP's built-in server is for local development. A public webhook provider needs 
 - Exact body bytes for JSON, XML, text, URL-encoded forms, multipart uploads, and binary data.
 - A responsive inspector with formatted/raw body views, headers, repeated query parameters, and request metadata. JSON formatting preserves large numeric IDs and the original number spelling.
 - Raw body downloads, complete JSON exports, copyable replay cURL commands, and downloadable replay shell scripts.
-- Live polling (with pause), literal text search, 50-item pages, request permalinks, and dynamic search permalinks.
+- Live polling (with pause), literal / wildcard / regex search, field filters, JSONPath, 50-item pages, request permalinks, and dynamic search permalinks.
 - Database tools: delete an individual capture, preview and delete older captures, flush one inbox or all inboxes, and download a consistent JSON backup.
 - No automatic expiry. Deleting files immediately releases their space; no vacuum or compaction is needed.
-- No external fonts, CDNs, analytics, runtime libraries, or network dependencies.
+- No external fonts, CDNs, analytics, or network dependencies. JSONPath is bundled locally with its license.
 
 ## URLs
 
@@ -52,7 +52,64 @@ Receiver and viewer are separate, so viewing a request never creates another cap
 
 Inbox names contain 1–64 lowercase ASCII letters, digits, hyphens, or underscores, starting with a letter or digit. Omit `inbox` for `default`. The receiver reserves only that query parameter; everything else is captured as supplied. Its raw query string preserves duplicate parameters and original escaping.
 
-Search covers request ID, method, URL path/query, content type, header names/values, and UTF-8 body text. It is a literal substring search (ASCII case-insensitive), not a regex or SQL query. `%` and `_` are ordinary characters. Binary bodies are downloadable but are not text-searched. Search links always show current matching captures; deleted items disappear and new matches appear.
+## Search
+
+The search bar finds literal substrings in IDs, methods, URLs, content types, header names/values, client IPs, size/received metadata, and UTF-8 body text. It ignores ASCII letter case. Punctuation such as `*`, `%`, `_`, and brackets is literal. Values are searched separately, so a match cannot cross from one header into another. Binary bodies are not text-searched.
+
+**Advanced search** adds up to eight conditions, combined with **All (AND)** or **Any (OR)**. The search bar is an additional AND condition. A live preview shows the count and three matching requests; JSONPath conditions also show the values selected from the currently open capture. Apply updates the list and URL, Cancel leaves the active search untouched. Removable chips show the applied filters, and matching requests include a short explanation. Open **Search guide & examples** inside the modal for syntax, semantics, and one-click examples.
+
+| Match mode | Behavior |
+| --- | --- |
+| Contains | Literal substring; empty text matches any existing value |
+| Equals | Entire value, interpreted literally |
+| Wildcard | Entire value; `*` any sequence, `?` one Unicode character, `\*` / `\?` / `\\` for literal symbols |
+| Regex | PHP/PCRE, without delimiters; optional multiline and dot-matches-newline switches |
+| Exists / Missing | Presence of a field/node, independent of its value |
+
+Match case is off by default. Contains/Equals use ASCII case-insensitive comparison; wildcard/regex use Unicode case folding. Regex searches within a value; use `\A` and `\z` to anchor the entire value. Wildcards include newlines. Invalid expressions and regex work-limit failures produce an explicit error rather than zero or partial matches.
+
+Scopes include body text, headers, a named header, URL-decoded query parameters, a named parameter, JSON body, method, URL, path/raw query, content type, ID, IP, body size, and received time. Header names ignore case; parameter names are case-sensitive. Repeated query parameters are preserved and any occurrence can match. Size comparisons use bytes. Received Before/After comparisons are strict and take an ISO timestamp with timezone, e.g. `2026-09-23T12:00:00Z`.
+
+### JSONPath
+
+Use a selector and a match mode together:
+
+| Selector | Match | Value |
+| --- | --- | --- |
+| `$.event` | Equals | `payment.failed` |
+| `$.data.customer.id` | Equals | `cus_123` |
+| `$.items[*].sku` | Wildcard | `PRO-*` |
+| `$['event.type']` | Equals | `push` |
+| `$..id` | Exists | — |
+| `$.items[?(@.sku == "PRO-123" && @.quantity > 1)]` | Exists | — |
+
+A condition matches when any selected value matches. For multiple checks on the **same array item**, use one predicate as in the last example; separate conditions may match different items. JSON is decoded regardless of Content-Type. Invalid/non-JSON and binary bodies do not match JSON conditions, including Missing. JSON null, false, zero, empty strings, and empty containers all **exist** when selected. Missing means the selector returned no nodes.
+
+Strings are matched without quotes; other selected values use compact JSON. Equals is a text comparison: numeric `123` and string `"123"` both match `123`. JSONPath predicates provide typed comparisons. Integers beyond PHP's integer range become digit strings to preserve exact IDs for text matching. Decimal values use PHP floating-point precision, so numeric predicates are not arbitrary precision; use raw body search when exact numeric spelling matters.
+
+The bundled [SoftCreatR JSONPath 2.0.0](https://github.com/SoftCreatR/JSONPath/tree/941fe4742e42380d394064fda61e2d9cc5615db1) supports child/recursive selectors, array wildcards/indexes/slices, and filter comparisons and logical operators. It is **not jq** and does not implement all of RFC 9535. Scripts, pipes, function extensions (`length`, `count`, `match`, `search`, `value`), and inline regex operators are unsupported; select values and use our Regex match mode instead. Sources and MIT license are vendored under `.conf/vendor/`; provenance and update instructions are in `.conf/vendor/README.md`.
+
+### Search API and links
+
+`GET api.php?inbox=default&q=hello` performs simple search. For advanced search, supply `filters` as a URL-encoded JSON object:
+
+```json
+{
+  "match": "all",
+  "rules": [
+    {"scope": "header", "key": "X-GitHub-Event", "op": "equals", "value": "push", "case": false},
+    {"scope": "json", "key": "$.repository.full_name", "op": "equals", "value": "owner/project"}
+  ]
+}
+```
+
+Rule fields: `scope`, `op`, optional `key`, `value`, `case` (boolean), and `flags` (`""`, `"m"`, `"s"`, `"ms"`). Scope names: `any`, `body`, `headers`, `header`, `query`, `parameter`, `json`, `method`, `url`, `path`, `content_type`, `id`, `ip`, `size`, `received`. Operators: `contains`, `equals`, `wildcard`, `regex`, `exists`, `missing`; size supports `equals`, `gt`, `gte`, `lt`, `lte`; received supports `before`, `after`.
+
+`GET api.php?action=search-preview` accepts the same arguments and optional `sample=ID`. It returns the total match count, up to three requests, and a `selections` array for JSONPath results against the sample (up to three shortened values per condition). List results include up to two shortened `matches` explanations per request. Search validation/evaluation errors return **422**; storage failures remain **503**.
+
+The browser URL and **Copy search link** include all active filters. Opening the link reconstructs the search and shows current results: deleted captures disappear and new matches appear. No saved-search database or index is needed.
+
+Search conditions are limited to 500 bytes per text field, eight rules, and 6,000 bytes of filter JSON (also limited to 7,000 URL-encoded bytes including search text, to keep links portable). A five-second scan budget is checked between files and conditions (not a hard interruption inside an individual JSONPath evaluation); PHP regex backtracking/recursion limits also bound pattern work. Failed searches return no partial results. Listing/search still scans the selected inbox's JSON files; sharding does not make body search indexed. Keep ephemeral inboxes tidy for responsive polling.
 
 ## Hosting
 
@@ -195,6 +252,6 @@ python3 tests/test_service.py
 node tests/test_frontend.cjs
 ```
 
-The integration suite starts an isolated PHP server with temporary JSON storage, uses bounded HTTP/process timeouts, and cleans up after itself. It checks HTTP methods, binary/multipart fidelity, headers, body limits, search/pagination, persistence, downloads, backup/restore, age-based deletion, flushing, concurrency, and no-cache/no-index responses. Frontend helper tests cover shell quoting, number precision, binary replay, and large-body replay. GitHub Actions runs against PHP 8.2–8.5.
+The integration suite starts an isolated PHP server with temporary JSON storage, uses bounded HTTP/process timeouts, and cleans up after itself. It checks HTTP methods, binary/multipart fidelity, headers, body limits, search/pagination, persistence, downloads, backup/restore, age-based deletion, flushing, concurrency, and no-cache/no-index responses. Frontend helper tests cover shell quoting, number precision, binary replay, and large-body replay. GitHub Actions runs against PHP 8.4–8.5.
 
 MIT licensed.

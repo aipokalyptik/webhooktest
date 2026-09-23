@@ -113,7 +113,7 @@ class ServiceTests(unittest.TestCase):
     def test_storage_error_recovers_with_config_php(self):
         root = Path(self.temp.name) / 'storage-recovery'
         (root / '.conf').mkdir(parents=True)
-        for filename in ['.conf/bootstrap.php', '.conf/router.php', 'api.php', 'ingest.php']:
+        for filename in ['.conf/bootstrap.php', '.conf/router.php', '.conf/search.php', 'api.php', 'ingest.php']:
             shutil.copyfile(ROOT / filename, root / filename)
         # A regular file cannot be used as a storage directory, even when run as root.
         (root / 'blocked').write_text('not a directory')
@@ -156,7 +156,7 @@ class ServiceTests(unittest.TestCase):
             server.wait(timeout=5)
 
     def test_private_conf_directory_is_not_served(self):
-        for path in ['/.conf/nginx.conf', '/.conf/apache.conf', '/.conf/config.example.php', '/.conf/config.php', '/.conf/config.local.php', '/.conf/bootstrap.php', '/.conf/router.php', '/.conf/restore.php', '/%2econf/nginx.conf', '/.git/config']:
+        for path in ['/.conf/nginx.conf', '/.conf/apache.conf', '/.conf/config.example.php', '/.conf/config.php', '/.conf/config.local.php', '/.conf/bootstrap.php', '/.conf/router.php', '/.conf/restore.php', '/.conf/search.php', '/.conf/vendor/softcreatr-jsonpath/src/JSONPath.php', '/%2econf/nginx.conf', '/.git/config']:
             status, headers, body = self.http('GET', path)
             self.assertEqual(status, 404, path)
             self.assertEqual(json.loads(body)['error'], 'Not found.')
@@ -264,6 +264,116 @@ class ServiceTests(unittest.TestCase):
         body = b'--BOUNDARY\r\nContent-Disposition: form-data; name="file"; filename="a.bin"\r\nContent-Type: application/octet-stream\r\n\r\n\x00\xff\x01\r\n--BOUNDARY--\r\n'
         r = self.capture(body, headers={'Content-Type':'multipart/form-data; boundary=BOUNDARY'})
         self.assertEqual(base64.b64decode(r['body_base64']), body)
+
+    def search_rules(self, rules, match='all', **params):
+        params.setdefault('inbox', self._testMethodName.lower())
+        status, result = self.api(filters=json.dumps({'match': match, 'rules': rules}), **params)
+        self.assertEqual(status, 200, result)
+        return result
+
+    def test_search_modes_and_field_isolation(self):
+        first = self.capture(b'payment.failed\nline two', headers={'X-Event': 'payment.failed', 'X-Empty': '', 'Content-Type': 'text/plain'})
+        second = self.capture(b'PAYMENT.REFUNDED', headers={'X-Event': 'something-else'})
+        third = self.capture(b'literal * ? [ ] and (a+)+$', method='PUT')
+        def ids(rule):
+            return {r['id'] for r in self.search_rules([rule])['requests']}
+        self.assertEqual(ids({'scope':'header', 'key':'x-EVENT', 'op':'equals', 'value':'PAYMENT.FAILED'}), {first['id']})
+        self.assertEqual(ids({'scope':'header', 'key':'x-event', 'op':'equals', 'value':'PAYMENT.FAILED', 'case':True}), set())
+        self.assertEqual(ids({'scope':'body', 'op':'equals', 'value':'payment.failed'}), set())
+        self.assertEqual(ids({'scope':'body', 'op':'contains', 'value':'payment.failed'}), {first['id']})
+        self.assertEqual(ids({'scope':'body', 'op':'wildcard', 'value':'payment.*'}), {first['id'], second['id']})
+        self.assertEqual(ids({'scope':'body', 'op':'wildcard', 'value':'failed'}), set())
+        self.assertEqual(ids({'scope':'body', 'op':'wildcard', 'value':r'*\* \?*'}), {third['id']})
+        self.assertEqual(ids({'scope':'body', 'op':'regex', 'value':r'payment\.(failed|refunded)'}), {first['id'], second['id']})
+        self.assertEqual(ids({'scope':'body', 'op':'regex', 'value':'^line two$', 'flags':'m'}), {first['id']})
+        self.assertEqual(ids({'scope':'body', 'op':'regex', 'value':'failed.line', 'flags':'s'}), {first['id']})
+        self.assertEqual(ids({'scope':'header', 'key':'X-Empty', 'op':'exists'}), {first['id']})
+        self.assertEqual(ids({'scope':'header', 'key':'X-Empty', 'op':'equals', 'value':''}), {first['id']})
+        self.assertEqual(ids({'scope':'header', 'key':'X-Empty', 'op':'missing'}), {second['id'], third['id']})
+        self.assertEqual(ids({'scope':'method', 'op':'equals', 'value':'PUT'}), {third['id']})
+        # A match cannot be manufactured across unrelated header values.
+        self.assertEqual(ids({'scope':'headers', 'op':'regex', 'value':'payment.failed.*text/plain', 'flags':'s'}), set())
+        rules = [{'scope':'method','op':'equals','value':'PUT'}, {'scope':'header','key':'x-event','op':'equals','value':'payment.failed'}]
+        self.assertEqual(self.search_rules(rules)['matched'], 0)
+        self.assertEqual(self.search_rules(rules, match='any')['matched'], 2)
+        self.assertEqual(self.search_rules(rules, match='any', q='line two')['matched'], 1)
+        self.assertEqual(self.search_rules([{'scope':'size','op':'equals','value':str(first['size'])}])['matched'], 1)
+        self.assertEqual(self.search_rules([{'scope':'received','op':'before','value':'2000-01-01T00:00:00Z'}])['matched'], 0)
+        self.assertEqual(self.search_rules([{'scope':'received','op':'after','value':'2000-01-01T00:00:00Z'}])['matched'], 3)
+
+    def test_search_repeated_parameters_and_unicode(self):
+        record = self.capture('café'.encode(), query='&tag=first&tag=second&empty=&a.b=c%2Bd&plus=a+b&Tag=UPPER')
+        for key, value in [('tag','second'), ('empty',''), ('a.b','c+d'), ('plus','a b')]:
+            self.assertEqual(self.search_rules([{'scope':'parameter','key':key,'op':'equals','value':value}])['matched'], 1)
+        self.assertEqual(self.search_rules([{'scope':'parameter','key':'TAG','op':'exists'}])['matched'], 0)
+        self.assertEqual(self.search_rules([{'scope':'body','op':'wildcard','value':'caf?'}])['matched'], 1)
+        self.assertEqual(self.search_rules([{'scope':'body','op':'regex','value':'CAFÉ'}])['matched'], 1)
+        result = self.search_rules([{'scope':'parameter','key':'tag','op':'equals','value':'second'}])
+        self.assertEqual(result['requests'][0]['matches'][0], {'field':'Query: tag', 'value':'second'})
+
+    def test_search_jsonpath_selection_types_and_preview(self):
+        record = self.capture(b'{"event":"payment.failed","nil":null,"bool":false,"empty":"","zero":0,"big":900719925474099312345,"event.type":"push","items":[{"sku":"PRO-123","quantity":2},{"sku":"OTHER","quantity":0}]}', headers={'Content-Type':'text/plain'})
+        self.capture(b'not JSON')
+        self.capture(bytes([255, 0, 1]))
+        for key in ['nil', 'bool', 'empty', 'zero']:
+            self.assertEqual(self.search_rules([{'scope':'json','key':'$.'+key,'op':'exists'}])['matched'], 1)
+            self.assertEqual(self.search_rules([{'scope':'json','key':'$.'+key,'op':'missing'}])['matched'], 0)
+        self.assertEqual(self.search_rules([{'scope':'json','key':'$.absent','op':'missing'}])['matched'], 1)
+        for key, value in [('$.nil','null'), ('$.bool','false'), ('$.empty',''), ('$.zero','0'), ('$.big','900719925474099312345'), ("$['event.type']", 'push'), ('$.items[*].sku','PRO-123'), ('$..sku','OTHER')]:
+            self.assertEqual(self.search_rules([{'scope':'json','key':key,'op':'equals','value':value}])['matched'], 1, key)
+        expression = '$.items[?(@.sku == "PRO-123" && @.quantity > 1)]'
+        self.assertEqual(self.search_rules([{'scope':'json','key':expression,'op':'exists'}])['matched'], 1)
+        self.assertEqual(self.search_rules([{'scope':'json','key':'$.items[?(@.sku == "OTHER" && @.quantity > 1)]','op':'exists'}])['matched'], 0)
+        preview = self.search_rules([{'scope':'json','key':'$.items[*].sku','op':'wildcard','value':'PRO-*'}], action='search-preview', sample=record['id'])
+        self.assertEqual(preview['selections'], [{'condition':1,'applicable':True,'count':2,'values':['PRO-123','OTHER']}])
+        self.assertEqual(preview['requests'][0]['id'], record['id'])
+        # JSON root primitives, empty containers, and object/array distinctions survive decoding.
+        for raw in [b'null', b'false', b'0', b'{}', b'[]']:
+            item = self.capture(raw, inbox='root-json')
+            result = self.search_rules([{'scope':'json','key':'$','op':'equals','value':raw.decode()}], inbox='root-json')
+            self.assertIn(item['id'], [r['id'] for r in result['requests']])
+
+    def test_search_jsonpath_string_comparisons_are_not_numeric(self):
+        self.capture(b'{"items":[{"id":"01"},{"id":"10"},{"id":1}]}')
+        for expression, expected in [
+            ('$.items[?(@.id == "1")]', 0),
+            ('$.items[?(@.id == "01")]', 1),
+            ('$.items[?(@.id == 1)]', 1),
+            ('$.items[?(@.id < "2")]', 1),
+        ]:
+            result = self.search_rules([{'scope':'json','key':expression,'op':'exists'}])
+            self.assertEqual(result['matched'], expected, expression)
+        item = self.capture(b'{"items":[{"id":"10"}]}', inbox='lexical-order')
+        result = self.search_rules([{'scope':'json','key':'$.items[?(@.id < "2")]','op':'exists'}], inbox='lexical-order')
+        self.assertEqual([r['id'] for r in result['requests']], [item['id']])
+
+    def test_search_validation_and_regex_work_limits(self):
+        invalid = [
+            {'scope':'unknown','op':'contains'},
+            {'scope':'header','op':'equals','key':''},
+            {'scope':'json','key':'$.items[','op':'exists'},
+            {'scope':'json','key':'$.missing[?(@.length() > 1)]','op':'exists'},
+            {'scope':'json','key':'$.missing[?(@.n === 1)]','op':'exists'},
+            {'scope':'body','op':'regex','value':'['},
+            {'scope':'body','op':'regex','value':'hello','flags':'e'},
+            {'scope':'body','op':'contains','case':'false'},
+            {'scope':'body','op':'contains','value':['wrong']},
+            {'scope':'size','op':'gt','value':'-1'},
+            {'scope':'received','op':'after','value':'2026-02-30T00:00:00Z'},
+        ]
+        for rule in invalid:
+            status, result = self.api(inbox='empty-validation', filters=json.dumps({'match':'all','rules':[rule]}))
+            self.assertEqual(status, 422, (rule, result))
+            self.assertNotIn('Storage', result['error'])
+        for raw in ['{', 'null', '[]', json.dumps({'match':'all','rules':[{}]*9})]:
+            self.assertEqual(self.api(inbox='empty-validation', filters=raw)[0], 422)
+        self.capture(b'a' * 20000 + b'!')
+        status, result = self.api(inbox=self._testMethodName.lower(), filters=json.dumps({'match':'all','rules':[{'scope':'body','op':'regex','value':'(*NO_JIT)(a+)+$'}]}))
+        self.assertEqual(status, 422, result)
+        self.assertIn('Regex', result['error'])
+        # A failed search releases the lock and leaves capture/list operations working.
+        self.capture(b'after error')
+        self.assertEqual(self.api(inbox=self._testMethodName.lower())[0], 200)
 
     def test_search_literal_and_pagination_and_inbox_isolation(self):
         inbox = self._testMethodName.lower()

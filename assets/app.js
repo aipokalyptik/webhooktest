@@ -15,6 +15,7 @@ let current = null;
 let page = Math.max(1, Number.parseInt(params.get("page"), 10) || 1);
 let pages = 1;
 let query = (params.get("q") || "").slice(0, 500);
+let filters = params.get("filters") || "";
 let live = true;
 let activeTab = "body";
 let bodyMode = "pretty";
@@ -111,6 +112,7 @@ function updateAddress(replace = false) {
   url.search = "";
   url.searchParams.set("inbox", inbox);
   if (query) url.searchParams.set("q", query);
+  if (filters) url.searchParams.set("filters", filters);
   if (page > 1) url.searchParams.set("page", String(page));
   if (selected) url.searchParams.set("request", selected);
   history[replace ? "replaceState" : "pushState"]({}, "", url);
@@ -146,7 +148,7 @@ function emptyDetail(message = "") {
 async function loadList({ manual = false } = {}) {
   const generation = ++listGeneration;
   try {
-    const data = await api({ inbox, q: query, page });
+    const data = await api({ inbox, q: query, filters, page });
     if (generation !== listGeneration) return;
     $("connection-error").hidden = true;
     $("live-label").textContent = live ? "Live updates" : "Updates paused";
@@ -167,17 +169,17 @@ async function loadList({ manual = false } = {}) {
     $("previous").disabled = page <= 1;
     $("next").disabled = page >= pages;
     $("page-label").textContent = pages > 1 ? `${page} / ${pages}` : "";
-    const signature = JSON.stringify([data.requests, selected, query]);
+    const signature = JSON.stringify([data.requests, selected, query, filters]);
     if (signature !== lastListSignature) {
       lastListSignature = signature;
       $("request-list").innerHTML = data.requests.length
         ? data.requests
             .map(
               (r) =>
-                `<a href="?inbox=${encodeURIComponent(inbox)}&request=${r.id}" class="request-item ${r.id === selected ? "selected" : ""}" data-id="${r.id}" ${r.id === selected ? 'aria-current="true"' : ""}><div class="request-topline">${method(r.method)}<time class="request-time" datetime="${r.received_at}" title="${esc(time(r.received_at))}">${relative(r.received_at)}</time></div><div class="request-path">${esc(r.uri)}</div><div class="request-bottom"><span>${esc(r.content_type || "No content type")}</span><span>${bytes(r.size)}</span></div></a>`,
+                `<a href="?inbox=${encodeURIComponent(inbox)}&request=${r.id}" class="request-item ${r.id === selected ? "selected" : ""}" data-id="${r.id}" ${r.id === selected ? 'aria-current="true"' : ""}><div class="request-topline">${method(r.method)}<time class="request-time" datetime="${r.received_at}" title="${esc(time(r.received_at))}">${relative(r.received_at)}</time></div><div class="request-path">${esc(r.uri)}</div><div class="request-bottom"><span>${esc(r.content_type || "No content type")}</span><span>${bytes(r.size)}</span></div>${r.matches?.[0] ? `<div class="match-snippet"><strong>${esc(r.matches[0].field)}</strong> ${esc(r.matches[0].value)}</div>` : ""}</a>`,
             )
             .join("")
-        : `<div class="list-empty"><strong>${query ? "No matching requests" : "Listening for your first request"}</strong>${query ? "Try a different search or clear the search field." : "Your endpoint is ready. Send it something."}</div>`;
+        : `<div class="list-empty"><strong>${query || filters ? "No matching requests" : "Listening for your first request"}</strong>${query || filters ? "Try a different search or clear the search field." : "Your endpoint is ready. Send it something."}</div>`;
     } else {
       document.querySelectorAll(".request-time").forEach((el) => {
         el.textContent = relative(el.dateTime);
@@ -190,7 +192,7 @@ async function loadList({ manual = false } = {}) {
     if (generation !== listGeneration) return;
     $("connection-error").textContent = error.message;
     $("connection-error").hidden = false;
-    $("live-label").textContent = "Reconnecting…";
+    $("live-label").textContent = "Could not load results";
   }
 }
 async function selectRequest(id, replace = false) {
@@ -213,6 +215,8 @@ async function selectRequest(id, replace = false) {
       inbox = request.inbox;
       page = 1;
       query = "";
+      filters = "";
+      renderSearchChips();
       $("search").value = "";
       paintInbox();
       updateAddress(true);
@@ -301,6 +305,8 @@ async function sendSample() {
     if (!response.ok)
       throw new Error(result.error || "Could not send test request.");
     query = "";
+    filters = "";
+    renderSearchChips();
     page = 1;
     $("search").value = "";
     await selectRequest(result.id);
@@ -389,6 +395,7 @@ $("refresh").onclick = () => loadList({ manual: true });
 let searchTimer;
 $("search").oninput = () => {
   query = $("search").value;
+  renderSearchChips();
   page = 1;
   updateAddress(true);
   ++listGeneration;
@@ -598,6 +605,8 @@ window.addEventListener("popstate", async () => {
   selected = p.get("request");
   page = Math.max(1, Number.parseInt(p.get("page"), 10) || 1);
   query = (p.get("q") || "").slice(0, 500);
+  filters = p.get("filters") || "";
+  renderSearchChips();
   $("search").value = query;
   ++detailGeneration;
   ++listGeneration;
@@ -607,9 +616,10 @@ window.addEventListener("popstate", async () => {
   await loadList();
 });
 async function poll() {
-  if (live && !document.hidden) await loadList();
+  if (live && !document.hidden && !$("search-dialog").open) await loadList();
   setTimeout(poll, 4000);
 }
+initSearch();
 (async () => {
   $("search").value = query;
   paintInbox();
@@ -623,6 +633,7 @@ $("copy-search").onclick = () => {
   url.search = "";
   url.searchParams.set("inbox", inbox);
   if (query) url.searchParams.set("q", query);
+  if (filters) url.searchParams.set("filters", filters);
   if (page > 1) url.searchParams.set("page", String(page));
   copy(url.href);
 };

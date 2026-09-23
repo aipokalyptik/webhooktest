@@ -18,6 +18,10 @@ function respond(array $data, int $status = 200): never
     exit;
 }
 
+if (PHP_VERSION_ID < 80400) {
+    respond(['error' => 'Webhook Test requires PHP 8.4 or newer.'], 500);
+}
+
 set_exception_handler(function (Throwable $error): void {
     error_log('Webhook Test: ' . $error->getMessage());
     respond(['error' => 'Storage is unavailable. Set data_dir in .conf/config.php to a persistent directory writable by PHP. Check .conf/config.local.php for overrides and the server logs for details.'], 503);

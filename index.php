@@ -4,7 +4,7 @@ require __DIR__ . '/.conf/bootstrap.php';
 require_method(['GET', 'HEAD']);
 if (isset($_GET['asset'])) {
     $asset = param('asset');
-    $assets = ['app.css' => 'text/css; charset=utf-8', 'app.js' => 'text/javascript; charset=utf-8', 'core.js' => 'text/javascript; charset=utf-8', 'mark.svg' => 'image/svg+xml'];
+    $assets = ['app.css' => 'text/css; charset=utf-8', 'app.js' => 'text/javascript; charset=utf-8', 'core.js' => 'text/javascript; charset=utf-8', 'search.js' => 'text/javascript; charset=utf-8', 'mark.svg' => 'image/svg+xml'];
     if (!isset($assets[$asset])) {
         respond(['error' => 'Asset not found.'], 404);
     }
@@ -25,6 +25,7 @@ header('Content-Type: text/html; charset=utf-8');
     <link rel="icon" href="index.php?asset=mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="index.php?asset=app.css" />
     <script src="index.php?asset=core.js" defer></script>
+    <script src="index.php?asset=search.js" defer></script>
     <script src="index.php?asset=app.js" defer></script>
   </head>
   <body
@@ -174,10 +175,12 @@ header('Content-Type: text/html; charset=utf-8');
               /><kbd>/</kbd>
             </div>
             <div class="search-actions">
+              <button id="advanced-search" class="text-button">Advanced search</button>
               <button id="copy-search" class="text-button">
                 Copy search link ⧉
               </button>
             </div>
+            <div id="search-chips" class="search-chips" aria-label="Active search filters"></div>
             <div class="list-caption">
               NEWEST FIRST <span id="page-label"></span>
             </div>
@@ -248,6 +251,188 @@ header('Content-Type: text/html; charset=utf-8');
           <button type="button" id="random-name" class="secondary">
             Random name</button
           ><button class="primary">Open inbox →</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="search-dialog" aria-labelledby="search-title">
+      <form id="search-form">
+        <div class="dialog-title">
+          <div>
+            <div class="eyebrow">FIND THE REQUEST THAT MATTERS</div>
+            <h2 id="search-title">Advanced search</h2>
+          </div>
+          <button
+            type="button"
+            class="close-dialog icon-button"
+            aria-label="Close search"
+          >
+            ×
+          </button>
+        </div>
+        <div class="search-dialog-content">
+          <p>
+            Choose where to look and how to match. These filters work together with
+            the text in the search bar.
+          </p>
+          <button id="open-search-guide" type="button" class="text-button">
+            Search guide &amp; examples ↓
+          </button>
+          <label for="search-join">Combine conditions</label
+          ><select id="search-join">
+            <option value="all">Match all conditions (AND)</option>
+            <option value="any">Match any condition (OR)</option>
+          </select>
+          <div id="search-rules"></div>
+          <div class="search-builder-actions">
+            <button type="button" id="add-search-rule" class="secondary">
+              + Add condition</button
+            ><button type="button" id="reset-search-rules" class="text-button">
+              Reset filters</button
+            ><small>Up to 8 conditions</small>
+          </div>
+          <datalist id="search-header-names"></datalist
+          ><datalist id="search-query-names"></datalist>
+          <div
+            id="search-selection-preview"
+            class="search-selection-preview"
+            aria-live="polite"
+          ></div>
+          <details id="search-guide" class="search-guide">
+            <summary>Search guide &amp; examples</summary>
+            <p>
+              <strong>Start simple.</strong> Contains finds literal text anywhere in
+              a value. Equals compares the entire value. Neither treats punctuation
+              as special. Match case is off by default; literal comparisons ignore
+              ASCII letter case.
+            </p>
+            <p>
+              <strong>Wildcards.</strong> <code>*</code> matches any sequence
+              (including newlines), <code>?</code> one Unicode character. Patterns
+              match the entire value: <code>payment.*</code> matches event names,
+              <code>*failed*</code> matches within text. Escape literal symbols with
+              <code>\*</code>, <code>\?</code>, or <code>\\</code>.
+            </p>
+            <p>
+              <strong>Regex.</strong> Write PHP/PCRE syntax without slash
+              delimiters: <code>payment\.(failed|refunded)</code>. Use
+              <code>\A</code> and <code>\z</code> to match an entire value. The line
+              and dot checkboxes control multiline matching. Regex and wildcards use
+              Unicode case folding when Match case is off. Invalid or overly
+              expensive patterns show an error, never a misleading zero.
+            </p>
+            <h3>JSONPath: select first, then match</h3>
+            <p>
+              Choose JSON body and enter a path starting with <code>$</code>. A
+              condition matches if <em>any selected value</em> matches. JSON is
+              parsed regardless of Content-Type. Non-JSON bodies do not match JSON
+              conditions, including Missing.
+            </p>
+            <table class="kv-table">
+              <tbody>
+                <tr>
+                  <th><code>$.event</code></th>
+                  <td>A top-level field</td>
+                </tr>
+                <tr>
+                  <th><code>$.data.customer.id</code></th>
+                  <td>A nested field</td>
+                </tr>
+                <tr>
+                  <th><code>$.items[*].sku</code></th>
+                  <td>Every item's SKU</td>
+                </tr>
+                <tr>
+                  <th><code>$.items[0].sku</code></th>
+                  <td>The first item's SKU (indexes start at 0)</td>
+                </tr>
+                <tr>
+                  <th><code>$['event.type']</code></th>
+                  <td>A key that contains a dot</td>
+                </tr>
+                <tr>
+                  <th><code>$..id</code></th>
+                  <td>Every id at any depth</td>
+                </tr>
+                <tr>
+                  <th><code>$.items[?(@.quantity &gt; 1)]</code></th>
+                  <td>
+                    Items whose quantity exceeds 1; use Exists to find requests with
+                    such items
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              <strong>Same item, multiple checks.</strong> Use
+              <code
+                >$.items[?(@.sku == "PRO-123" &amp;&amp; @.quantity &gt; 1)]</code
+              >
+              with Exists. Separate conditions can match different items. Filters
+              support comparisons, <code>&amp;&amp;</code>, <code>||</code>, and
+              <code>!</code>. This is JSONPath, not jq: pipes, scripts, functions
+              such as <code>length()</code>, and inline regex operators are
+              unsupported. Select the values and use the Regex match mode instead.
+            </p>
+            <p>
+              <strong>Missing is different from null.</strong> Exists means the path
+              selects at least one node, even if its value is null, false, zero, or
+              empty. Missing means no nodes were selected. String values are matched
+              without quotes; other values use compact JSON. Equals is a text
+              comparison, so the number 123 and the string "123" both match
+              <code>123</code>. Use a JSONPath predicate for typed comparisons.
+            </p>
+            <p>
+              <strong>Numeric precision.</strong> Integers beyond PHP's integer
+              range are preserved as digit strings for text matching. Decimal
+              numbers use PHP floating-point precision; JSONPath numeric comparisons
+              are not arbitrary precision. Search the raw body when the exact
+              numeric spelling matters.
+            </p>
+            <p>
+              <strong>Headers &amp; parameters.</strong> Header names ignore case;
+              query parameter names are case-sensitive. Query names and values are
+              URL-decoded, and repeated parameters are kept: any occurrence can
+              match. Empty values still exist. All headers/parameters searches names
+              and values individually; matches do not span fields. Binary bodies are
+              not text-searched.
+            </p>
+            <p>
+              <strong>Times &amp; sizes.</strong> Enter bytes for body size, and an
+              ISO date with timezone for received time (for example
+              <code>2026-09-23T12:00:00Z</code>). Before/After are strict. Search
+              links preserve every condition and show the current results when
+              opened.
+            </p>
+            <div id="search-examples" class="search-examples">
+              <button type="button" class="secondary" data-search-example="header">
+                Add header example</button
+              ><button type="button" class="secondary" data-search-example="json">
+                Add JSON value example</button
+              ><button type="button" class="secondary" data-search-example="array">
+                Add array filter example</button
+              ><button type="button" class="secondary" data-search-example="regex">
+                Add regex example
+              </button>
+            </div>
+            <p>
+              Search scans the current inbox. Keep experiments short-lived for fast
+              results. Conditions are limited to 500 bytes each; the full filter is
+              limited to 6,000 bytes. Slow searches stop between captures/conditions
+              after 5 seconds and show an error instead of partial results.
+            </p>
+          </details>
+        </div>
+        <div class="search-preview-footer">
+          <p id="search-preview-count" role="status" aria-live="polite">
+            Checking matching requests…
+          </p>
+          <div id="search-preview-results"></div>
+          <div class="dialog-actions">
+            <button type="button" class="close-dialog secondary">Cancel</button
+            ><button id="apply-search" class="primary" disabled>
+              Apply filters
+            </button>
+          </div>
         </div>
       </form>
     </dialog>
@@ -386,7 +571,7 @@ header('Content-Type: text/html; charset=utf-8');
         The capture limit is <span id="body-limit">10 MB</span> per request;
         your host may impose a lower limit. Requests stay until explicitly
         deleted. Search matches literal text across IDs, methods, URLs, headers,
-        and UTF-8 bodies. Press / to search, Esc to close dialogs.
+        and UTF-8 bodies. Advanced search adds field filters, wildcards, regex, and JSONPath with an in-app guide. Press / to search, Esc to close dialogs.
       </p>
     </dialog>
     <noscript

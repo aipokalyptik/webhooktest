@@ -1,0 +1,27 @@
+--- a/src/Filters/QueryMatchFilter.php
++++ b/src/Filters/QueryMatchFilter.php
+@@ -478,6 +478,11 @@
+             return $a === $b;
+         }
+ 
++        // JSON strings compare as strings, including numeric-looking identifiers.
++        if (\is_string($a) && \is_string($b)) {
++            return $a === $b;
++        }
++
+         $type_a = \gettype($a);
+         $type_b = \gettype($b);
+ 
+@@ -528,7 +533,11 @@
+ 
+     protected function compareLessThan(mixed $a, mixed $b): bool
+     {
+-        if ((\is_string($a) && \is_string($b)) || ($this->isNumber($a) && $this->isNumber($b))) {
++        if (\is_string($a) && \is_string($b)) {
++            return \strcmp($a, $b) < 0;
++        }
++
++        if ($this->isNumber($a) && $this->isNumber($b)) {
+             //numerical and string comparison supported only
+             return $a < $b;
+         }

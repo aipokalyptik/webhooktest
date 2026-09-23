@@ -3,48 +3,68 @@ declare(strict_types=1);
 require __DIR__ . '/.conf/bootstrap.php';
 $action = param('action', 'list');
 
-if ($action === 'list') {
-    require_method(['GET', 'HEAD']);
-    $name = inbox();
-    $query = param('q');
-    if (strlen($query) > 500) {
-        respond(['error' => 'Search is limited to 500 bytes.'], 400);
-    }
-    $page = filter_var(param('page', '1'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1000000]]);
-    if ($page === false) {
-        respond(['error' => 'Invalid page.'], 400);
-    }
-    $data = storage(function (string $directory) use ($name, $query, $page): array {
-        $items = [];
-        $inboxes = [];
-        $stats = ['total' => 0, 'bytes' => 0, 'latest' => null];
-        foreach (capture_files($directory) as $path) {
-            $folderInbox = capture_folder_inbox($path);
-            if ($folderInbox !== $name) {
-                $inboxes[$folderInbox] = ($inboxes[$folderInbox] ?? 0) + 1;
-                continue;
-            }
-            $record = read_stored_capture($directory, $path);
-            $inboxes[$record['inbox']] = ($inboxes[$record['inbox']] ?? 0) + 1;
-            $stats['total']++;
-            $stats['bytes'] += $record['size'];
-            $stats['latest'] = max($stats['latest'] ?? '', $record['received_at']);
-            if ($query !== '') {
-                $searchable = implode("\n", [$record['id'], $record['method'], $record['uri'], $record['content_type'], json_encode($record['headers'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $record['body'] ?? '']);
-                if (stripos($searchable, $query) === false) {
+if (in_array($action, ['list', 'search-preview'], true)) {
+    require __DIR__ . '/.conf/search.php';
+    try {
+        require_method(['GET', 'HEAD']);
+        $name = inbox();
+        $query = param('q');
+        if (strlen($query) > 500) {
+            respond(['error' => 'Search is limited to 500 bytes.'], 400);
+        }
+        $search = compile_search(param('filters'), $query);
+        $page = filter_var(param('page', '1'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1000000]]);
+        if ($page === false) {
+            respond(['error' => 'Invalid page.'], 400);
+        }
+        $data = storage(function (string $directory) use ($name, $search, $page): array {
+            $items = [];
+            $inboxes = [];
+            $stats = ['total' => 0, 'bytes' => 0, 'latest' => null];
+            foreach (capture_files($directory) as $path) {
+                search_check_time($search);
+                $folderInbox = capture_folder_inbox($path);
+                if ($folderInbox !== $name) {
+                    $inboxes[$folderInbox] = ($inboxes[$folderInbox] ?? 0) + 1;
                     continue;
                 }
+                $record = read_stored_capture($directory, $path);
+                $inboxes[$record['inbox']] = ($inboxes[$record['inbox']] ?? 0) + 1;
+                $stats['total']++;
+                $stats['bytes'] += $record['size'];
+                $stats['latest'] = max($stats['latest'] ?? '', $record['received_at']);
+                $evidence = match_search($record, $search);
+                if ($evidence === null) continue;
+                $items[] = array_intersect_key($record, array_flip(['id', 'inbox', 'received_at', 'method', 'uri', 'content_type', 'size'])) + ['matches' => $evidence];
             }
-            $items[] = array_intersect_key($record, array_flip(['id', 'inbox', 'received_at', 'method', 'uri', 'content_type', 'size']));
+            usort($items, fn ($a, $b) => [$b['received_at'], $b['id']] <=> [$a['received_at'], $a['id']]);
+            $matched = count($items);
+            $pages = max(1, (int) ceil($matched / 50));
+            $page = min($page, $pages);
+            ksort($inboxes);
+            return ['requests' => array_slice($items, ($page - 1) * 50, 50), 'matched' => $matched, 'page' => $page, 'pages' => $pages, 'stats' => $stats, 'inboxes' => array_map(fn ($name, $count) => ['name' => (string) $name, 'count' => $count], array_keys($inboxes), array_values($inboxes)), 'max_body_bytes' => config()['max_body_bytes']];
+        });
+        if ($action === 'search-preview') {
+            $data['requests'] = array_slice($data['requests'], 0, 3);
+            $data['selections'] = [];
+            if (param('sample') !== '') {
+                $id = param('sample');
+                if (!preg_match('/\A[a-f0-9]{32}\z/', $id)) throw new SearchError('Invalid preview request ID.');
+                $record = find_capture($id);
+                if ($record && $record['inbox'] === $name) {
+                    $cache = [];
+                    foreach ($search['rules'] as $i => $rule) {
+                        if ($rule['scope'] !== 'json') continue;
+                        $selection = search_values($record, $rule, $cache);
+                        $data['selections'][] = ['condition' => $i + 1, 'applicable' => $selection['applicable'], 'count' => count($selection['values']), 'values' => array_map(fn ($v) => substr($v[1], 0, 300), array_slice($selection['values'], 0, 3))];
+                    }
+                }
+            }
         }
-        usort($items, fn ($a, $b) => [$b['received_at'], $b['id']] <=> [$a['received_at'], $a['id']]);
-        $matched = count($items);
-        $pages = max(1, (int) ceil($matched / 50));
-        $page = min($page, $pages);
-        ksort($inboxes);
-        return ['requests' => array_slice($items, ($page - 1) * 50, 50), 'matched' => $matched, 'page' => $page, 'pages' => $pages, 'stats' => $stats, 'inboxes' => array_map(fn ($name, $count) => ['name' => (string) $name, 'count' => $count], array_keys($inboxes), array_values($inboxes)), 'max_body_bytes' => config()['max_body_bytes']];
-    });
-    respond($data);
+        respond($data);
+    } catch (SearchError $error) {
+        respond(['error' => $error->getMessage()], 422);
+    }
 }
 
 if (in_array($action, ['request', 'download', 'export', 'delete'], true)) {
