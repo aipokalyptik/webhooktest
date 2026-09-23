@@ -20,7 +20,7 @@ function respond(array $data, int $status = 200): never
 
 set_exception_handler(function (Throwable $error): void {
     error_log('Webhook Test: ' . $error->getMessage());
-    respond(['error' => 'Storage is unavailable. Check the writable JSON data directory and server logs; see README.md.'], 503);
+    respond(['error' => 'Storage is unavailable. Set data_dir in .conf/config.php to a persistent directory writable by PHP. Check .conf/config.local.php for overrides and the server logs for details.'], 503);
 });
 
 function param(string $name, string $default = ''): string
@@ -57,13 +57,23 @@ function config(): array
         return $config;
     }
     $root = dirname(__DIR__);
-    $local = is_file(__DIR__ . '/config.local.php') ? require __DIR__ . '/config.local.php' : [];
+    $settings = [];
+    // Load the main configuration first, then optional machine-specific overrides.
+    foreach (['config.php', 'config.local.php'] as $filename) {
+        if (is_file(__DIR__ . '/' . $filename)) {
+            $values = require __DIR__ . '/' . $filename;
+            if (!is_array($values)) {
+                throw new RuntimeException('.conf/' . $filename . ' must return a settings array.');
+            }
+            $settings = array_replace($settings, $values);
+        }
+    }
     $config = array_replace([
         // Keep captures out of the public webroot, without depending on web-server rules.
         'data_dir' => getenv('WEBHOOK_DATA_DIR') ?: dirname($root) . '/.webhooktest-' . substr(hash('sha256', $root), 0, 12),
         'base_url' => getenv('WEBHOOK_BASE_URL') ?: '',
         'max_body_bytes' => 10 * 1024 * 1024,
-    ], $local);
+    ], $settings);
     return $config;
 }
 

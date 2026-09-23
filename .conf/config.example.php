@@ -1,5 +1,5 @@
 <?php
-// Optional: copy to .conf/config.local.php. The defaults work without this file.
+// Optional: copy to .conf/config.php. The defaults work without this file.
 return [
     // Absolute, persistent directory writable by PHP; keep it outside the webroot.
     // 'data_dir' => '/var/lib/webhooktest',

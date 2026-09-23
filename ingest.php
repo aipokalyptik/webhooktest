@@ -11,9 +11,9 @@ $preflight = $_SERVER['REQUEST_METHOD'] === 'OPTIONS' && isset($_SERVER['HTTP_AC
 $name = inbox();
 $type = $_SERVER['CONTENT_TYPE'] ?? '';
 // PHP can consume multipart bodies before this script runs. Never report success
-// for an empty substitute: .user.ini (FPM) or the documented CLI flag preserves bytes.
+// for an empty substitute: the FastCGI setting, .user.ini, or CLI flag preserves bytes.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($type, 'multipart/form-data') === 0 && filter_var(ini_get('enable_post_data_reading'), FILTER_VALIDATE_BOOLEAN)) {
-    respond(['error' => 'Multipart capture requires enable_post_data_reading=Off. Use the included .user.ini or set it in php.ini, then restart PHP.'], 503);
+    respond(['error' => 'Multipart capture requires enable_post_data_reading=Off. Use PHP_ADMIN_VALUE in .conf/nginx.conf, the included .user.ini, or the documented PHP CLI flag; see README.md.'], 503);
 }
 $limit = (int) config()['max_body_bytes'];
 if ($limit < 1) {

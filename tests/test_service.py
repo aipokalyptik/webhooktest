@@ -94,15 +94,65 @@ class ServiceTests(unittest.TestCase):
             return json.loads(result.stdout)
         expected = str(root.parent / ('.webhooktest-' + hashlib.sha256(str(root).encode()).hexdigest()[:12]))
         self.assertEqual(settings()['data_dir'], expected)
-        (conf / 'config.local.php').write_text("<?php return ['base_url'=>'https://hooks.example.test/subdir','max_body_bytes'=>1234];")
+        (conf / 'config.php').write_text("<?php return ['base_url'=>'https://hooks.example.test/subdir','max_body_bytes'=>1234];")
         env['WEBHOOK_BASE_URL'] = 'https://overridden.example.test'
         configured = settings()
         self.assertEqual(configured['base_url'], 'https://hooks.example.test/subdir')
         self.assertEqual(configured['max_body_bytes'], 1234)
         self.assertEqual(configured['data_dir'], expected)
+        (conf / 'config.local.php').write_text("<?php return ['max_body_bytes'=>5678];")
+        configured = settings()
+        self.assertEqual(configured['base_url'], 'https://hooks.example.test/subdir')
+        self.assertEqual(configured['max_body_bytes'], 5678)
+        self.assertEqual(configured['data_dir'], expected)
+
+    def test_storage_error_recovers_with_config_php(self):
+        root = Path(self.temp.name) / 'storage-recovery'
+        (root / '.conf').mkdir(parents=True)
+        for filename in ['.conf/bootstrap.php', '.conf/router.php', 'api.php', 'ingest.php']:
+            shutil.copyfile(ROOT / filename, root / filename)
+        # A regular file cannot be used as a storage directory, even when run as root.
+        (root / 'blocked').write_text('not a directory')
+        config = root / '.conf/config.php'
+        config.write_text("<?php return ['data_dir'=>dirname(__DIR__) . '/blocked'];")
+        with socket.socket() as listener:
+            listener.bind(('127.0.0.1', 0))
+            port = listener.getsockname()[1]
+        server = subprocess.Popen(['php', '-d', 'enable_post_data_reading=Off', '-S', f'127.0.0.1:{port}', '.conf/router.php'], cwd=root, env=self.env, stdout=self.log, stderr=self.log)
+        def request(method, path, body=None):
+            connection = http.client.HTTPConnection('127.0.0.1', port, timeout=5)
+            try:
+                connection.request(method, path, body=body)
+                response = connection.getresponse()
+                return response.status, json.loads(response.read())
+            finally:
+                connection.close()
+        try:
+            deadline = time.monotonic() + 5
+            while True:
+                try:
+                    status, result = request('GET', '/api.php')
+                    break
+                except OSError:
+                    if time.monotonic() > deadline:
+                        raise
+                    time.sleep(.05)
+            self.assertEqual(status, 503)
+            self.assertIn('.conf/config.php', result['error'])
+            self.assertIn('data_dir', result['error'])
+            config.write_text("<?php return ['data_dir'=>dirname(__DIR__) . '/working'];")
+            status, result = request('POST', '/ingest.php', b'capture after storage repair')
+            self.assertEqual(status, 201)
+            self.assertTrue((root / 'working' / (result['id'] + '.json')).is_file())
+            status, result = request('GET', '/api.php')
+            self.assertEqual(status, 200)
+            self.assertEqual(result['stats']['total'], 1)
+        finally:
+            server.terminate()
+            server.wait(timeout=5)
 
     def test_private_conf_directory_is_not_served(self):
-        for path in ['/.conf/nginx.conf', '/.conf/apache.conf', '/.conf/config.example.php', '/.conf/config.local.php', '/.conf/bootstrap.php', '/.conf/router.php', '/.conf/restore.php', '/%2econf/nginx.conf', '/.git/config']:
+        for path in ['/.conf/nginx.conf', '/.conf/apache.conf', '/.conf/config.example.php', '/.conf/config.php', '/.conf/config.local.php', '/.conf/bootstrap.php', '/.conf/router.php', '/.conf/restore.php', '/%2econf/nginx.conf', '/.git/config']:
             status, headers, body = self.http('GET', path)
             self.assertEqual(status, 404, path)
             self.assertEqual(json.loads(body)['error'], 'Not found.')

@@ -60,15 +60,16 @@ Upload/clone **the whole repository** into a PHP-enabled webroot, including `.us
 
 Application configuration, server examples, and private PHP support scripts live in **`.conf/`**. The supplied hosting rules block that directory along with other dot paths; there is no list of internal filenames to maintain.
 
-- `.conf/config.example.php` → `.conf/config.local.php`: optional application settings.
+- `.conf/config.example.php` → `.conf/config.php`: optional application settings.
+- `.conf/config.local.php`: optional machine-specific overrides.
 - `.conf/nginx.conf` and `.conf/apache.conf`: hosting examples.
 - `.conf/bootstrap.php`, `.conf/router.php`, `.conf/restore.php`: private PHP support and command-line tools.
 
-The root `.htaccess` and `.user.ini` are the two discovery files that must stay in the webroot: Apache and PHP read them there automatically. Moving them into `.conf` would require extra server-level setup. They contain only the directory-wide hosting rules and multipart setting.
+The root `.htaccess` and `.user.ini` are discovery files for Apache and PHP. They stay in the webroot so upload-and-run hosting works automatically. For nginx + PHP-FPM, the supplied `.conf/nginx.conf` passes the multipart setting directly through FastCGI, so that deployment does not need `.user.ini` for capture.
 
 The default storage location is a sibling directory named `.webhooktest-<path-hash>`, derived from the installation's absolute directory. PHP creates it with owner-only permissions. The parent must be writable by PHP. If your host restricts writing outside the webroot, explicitly configure another persistent writable directory allowed by the host. Keep capture storage outside the webroot.
 
-Configuration is optional. Copy [`.conf/config.example.php`](.conf/config.example.php) to **`.conf/config.local.php`** (ignored by Git):
+Configuration is optional. Copy [`.conf/config.example.php`](.conf/config.example.php) to **`.conf/config.php`** (ignored by Git):
 
 ```php
 <?php
@@ -79,13 +80,27 @@ return [
 ];
 ```
 
-`WEBHOOK_DATA_DIR` and `WEBHOOK_BASE_URL` environment variables are also supported; `.conf/config.local.php` takes precedence. Set the full public `base_url`, including a subdirectory if any, when behind a reverse proxy. Proxy forwarding headers are not implicitly trusted. Use a stable `data_dir` when releases change the checkout path; otherwise a new path gets a new default storage directory.
+`WEBHOOK_DATA_DIR` and `WEBHOOK_BASE_URL` environment variables are also supported. Settings load in this order, with later values overriding earlier ones: built-in defaults/environment, `.conf/config.php`, then optional `.conf/config.local.php`. Both configuration files are ignored by Git and must return a PHP array. Set the full public `base_url`, including a subdirectory if any, when behind a reverse proxy. Proxy forwarding headers are not implicitly trusted. Use a stable `data_dir` when releases change the checkout path; otherwise a new path gets a new default storage directory.
+
+If storage returns `503`, set `data_dir` in `.conf/config.php` to a persistent directory that the PHP worker can create or write to, and check whether `.conf/config.local.php` overrides it. Check the PHP/server error log for the underlying filesystem or capture-file error. Settings are loaded before storage is opened, including for the CLI restore utility; fixing the configuration takes effect on subsequent requests subject to your host's PHP opcode-cache policy.
 
 The application limit defaults to **10 MiB per request**. Oversize bodies return `413` without saving a partial capture. Your reverse proxy/web server may impose its own lower body limit or reject particular HTTP methods (especially TRACE and CONNECT). No PHP application can recover requests rejected before they reach it.
 
 ### Multipart capture
 
-PHP must have `enable_post_data_reading=Off` **before the request starts** to expose exact multipart bytes through `php://input`. The included `.user.ini` sets it for PHP-FPM/CGI, and `.htaccess` sets it for Apache mod_php. Restart/reload PHP or allow its `.user.ini` cache to expire after deployment. The local start command supplies the equivalent flag. If the setting is ignored, multipart POSTs return a descriptive `503` instead of falsely reporting an empty capture as successful. See the [PHP input-stream documentation](https://www.php.net/manual/en/wrappers.php.php).
+PHP must have `enable_post_data_reading=Off` **before the request starts** to expose exact multipart bytes through `php://input`.
+
+For **nginx + PHP-FPM**, the included [`.conf/nginx.conf`](.conf/nginx.conf) sets this inside its PHP `location` block:
+
+```nginx
+fastcgi_param PHP_ADMIN_VALUE "enable_post_data_reading=Off";
+```
+
+FPM applies this setting before reading the request body, preserving the complete multipart payload, including uploaded files. Validate with `nginx -t`, then reload nginx using your host's service manager. A PHP-FPM restart is not required for this FastCGI change, and `.user.ini` is not needed for multipart capture in this setup. If your PHP location already supplies `PHP_ADMIN_VALUE`, add the setting to that same value separated by `\n`, rather than defining the parameter twice. See [PHP's nginx/FPM configuration documentation](https://www.php.net/manual/en/install.fpm.configuration.php).
+
+For other **PHP-FPM/CGI** hosts, the included `.user.ini` provides the setting; restart/reload PHP or allow its `.user.ini` cache to expire after deployment. The root `.htaccess` handles **Apache mod_php**, and the local start command supplies the equivalent **PHP CLI** flag. This setting cannot be changed in `.conf/config.php`: that file is read after PHP's request-body handling has begun.
+
+If the setting is ignored, multipart POSTs return a descriptive `503` instead of falsely reporting an empty capture as successful. See the [PHP input-stream documentation](https://www.php.net/manual/en/wrappers.php.php).
 
 ### Apache
 
